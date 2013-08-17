@@ -72,6 +72,14 @@ function goList(id) {
     config.db.get(id, function(err, doc){
         $("#content").html(config.t.list(doc))
 
+        $("#content .todo-index").click(function(){
+            goIndex()
+        })
+
+        $("#content .todo-share").click(function(){
+            goShare(id)
+        })
+
         $("#content form").submit(function(e) {
             e.preventDefault()
             var doc = jsonform(this)
@@ -104,8 +112,13 @@ function goList(id) {
     })
 }
 
-function toggleChecked() {
-
+function toggleChecked(id) {
+    console.log("toggle", id)
+    config.db.get(id, function(err, doc){
+        doc.checked = !doc.checked
+        doc.created_at = new Date()
+        config.db.put(id, doc, function(){})
+    })
 }
 
 function getConfig(done) {
@@ -153,7 +166,7 @@ function getConfig(done) {
     }
 
     function setupViews(db, cb) {
-        var design = "_design/todo3"
+        var design = "_design/todo5"
         db.put(design, {
             views : {
                 lists : {
@@ -166,7 +179,8 @@ function getConfig(done) {
                 items : {
                     map : function(doc) {
                         if (doc.type == "item" && doc.created_at && doc.title && doc.listId) {
-                            emit([doc.listId, doc.checked, doc.created_at], doc.title)
+                            emit([doc.listId, !doc.checked, doc.created_at],
+                                {checked : doc.checked ? "checked" : "", title : doc.title})
                         }
                     }.toString()
                 }

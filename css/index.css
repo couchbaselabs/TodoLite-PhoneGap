@@ -37,3 +37,13 @@ form input {
     width:100%;
 }
 
+.topcoat-button.todo-small {
+	line-height: 2rem;
+	padding: 0 0.6rem 2px 0.6rem;
+	font-size: 28px;
+	letter-spacing: 0;
+}
+
+.topcoat-navigation-bar__item.todo-padded {
+	padding-top:1rem;
+}

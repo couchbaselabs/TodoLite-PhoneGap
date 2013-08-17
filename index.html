@@ -22,7 +22,7 @@
         <meta charset="utf-8" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
-        <link rel="stylesheet" type="text/css" href="css/topcoat-mobile-light.min.css">
+        <link rel="stylesheet" type="text/css" href="css/topcoat-mobile-dark.min.css">
         <link rel="stylesheet" type="text/css" href="css/index.css" />
         <title>Todo Lite</title>
     </head>
@@ -31,7 +31,7 @@
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/zepto.min.js"></script>
         <script type="text/javascript" src="js/modules.js"></script>
-        <script type="text/javascript" src="http://10.0.1.12:8080/js/index.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
 <!-- mustache templates -->
 <script type="text/mustache" id="index-mu">
 <header>
@@ -63,8 +63,14 @@
 <script type="text/mustache" id="list-mu">
 <header>
     <div class="topcoat-navigation-bar">
-        <div class="topcoat-navigation-bar__item center full">
+        <div class="topcoat-navigation-bar__item left quarter todo-padded">
+            <button class="todo-index topcoat-button todo-small">&larr;</button>
+        </div>
+        <div class="topcoat-navigation-bar__item center half">
             <h1 class="topcoat-navigation-bar__title">{{title}}</h1>
+        </div>
+        <div class="topcoat-navigation-bar__item right quarter todo-padded">
+            <button class="todo-share topcoat-button todo-small">&#9786;</button>
         </div>
     </div>
     <div class="topcoat-navigation-bar">
@@ -82,9 +88,11 @@
     {{#rows}}
         <li class="topcoat-list__item" data-id="{{id}}">
             <label class="topcoat-checkbox__label">
-                <input type="checkbox">
-                <div class="topcoat-checkbox"></div>
-                {{value}}
+                {{#value}}
+                    <input {{checked}} type="checkbox">
+                    <div class="topcoat-checkbox"></div>
+                    {{title}}
+                {{/value}}
             </label>
         </li>
     {{/rows}}
