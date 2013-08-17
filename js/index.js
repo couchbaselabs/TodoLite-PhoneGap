@@ -19,33 +19,110 @@
 
 
 var coax = require("coax"),
-    appDbName = "todo";
+    fastclick = require("fastclick"),
+    appDbName = "todo"
 
-document.addEventListener("deviceready", appInit, false);
+new fastclick.FastClick(document.body)
+
+document.addEventListener("deviceready", appInit, false)
 
 function appInit() {
     getConfig(function(err, config){
-        window.config = config;
+        window.config = config
         console.log("config", config)
-        appReady();
+        appReady()
     })
 };
 
+window.dbChanged = function(){}
+
 function appReady() {
+    config.db.changes(function(){
+        window.dbChanged()
+    })
     goIndex()
 }
 
-
 function goIndex() {
-
+    $("#content").html(config.t.index())
+    $("#content form").submit(function(e) {
+        e.preventDefault()
+        var doc = jsonform(this)
+        doc.type = "list"
+        doc.created_at = new Date()
+        console.log(doc)
+        config.db.post(doc, function(err, ok) {
+            $("#content form input").val("")
+        })
+    })
+    $("#scrollable").on("click", "li", function() {
+        var id = $(this).attr("data-id");
+        goList(id)
+    })
+    window.dbChanged = function() {
+        config.views(["lists", {descending : true}], function(err, view) {
+            console.log("lists", view)
+            $("#scrollable").html(config.t.indexList(view))
+        })
+    }
+    window.dbChanged()
 }
 
+function goList(id) {
+    config.db.get(id, function(err, doc){
+        $("#content").html(config.t.list(doc))
+
+        $("#content form").submit(function(e) {
+            e.preventDefault()
+            var doc = jsonform(this)
+            doc.type = "item"
+            doc.listId = id
+            doc.created_at = new Date()
+            console.log(doc)
+            config.db.post(doc, function(err, ok) {
+                $("#content form input").val("")
+            })
+        })
+
+        $("#scrollable").on("click", "li", function() {
+            var id = $(this).attr("data-id");
+            toggleChecked(id)
+        })
+
+        window.dbChanged = function() {
+            config.views(["items", {
+                startkey : [id, {}],
+                endkey : [id],
+                descending : true
+            }], function(err, view) {
+                console.log("items", view)
+                $("#scrollable").html(config.t.listItems(view))
+            })
+        }
+
+        window.dbChanged()
+    })
+}
+
+function toggleChecked() {
+
+}
 
 function getConfig(done) {
     // get CBL url
     if (!window.cblite) {
         return done('Couchbase Lite not installed')
     }
+
+    var mustache = require("mustache"),
+        t = {}
+
+    $('script[type="text/mustache"]').each(function() {
+        var id = this.id.split('-')
+        id.pop()
+        t[id.join('-')] = mustache.compile(this.innerHTML.replace(/^\s+|\s+$/g,''))
+    });
+
     cblite.getURL(function(err, url) {
         if (err) {
             return done(err)
@@ -61,7 +138,8 @@ function getConfig(done) {
                         user : user,
                         db : db,
                         views : views,
-                        server : url
+                        server : url,
+                        t : t
                     })
                 })
             })
@@ -75,13 +153,20 @@ function getConfig(done) {
     }
 
     function setupViews(db, cb) {
-        var design = "_design/todo"
+        var design = "_design/todo3"
         db.put(design, {
             views : {
                 lists : {
                     map : function(doc) {
-                        if (doc.type == "list" && doc.created_at && doc.name) {
+                        if (doc.type == "list" && doc.created_at && doc.title) {
                             emit(doc.created_at, doc.title)
+                        }
+                    }.toString()
+                },
+                items : {
+                    map : function(doc) {
+                        if (doc.type == "item" && doc.created_at && doc.title && doc.listId) {
+                            emit([doc.listId, doc.checked, doc.created_at], doc.title)
                         }
                     }.toString()
                 }
@@ -103,3 +188,18 @@ function getConfig(done) {
 }
 
 
+function jsonform(elem) {
+  var o = {}, list = $(elem).serializeArray();
+  for (var i = list.length - 1; i >= 0; i--) {
+    var name = list[i].name, value = list[i].value;
+    if (o[name]) {
+        if (!o[name].push) {
+            o[name] = [o[name]];
+        }
+        o[name].push(value);
+    } else {
+        o[name] = value;
+    }
+  };
+  return o;
+};

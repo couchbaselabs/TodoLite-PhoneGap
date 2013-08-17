@@ -27,13 +27,11 @@
         <title>Todo Lite</title>
     </head>
     <body>
-        <div id="content">
-
-        </div>
+        <div id="content"></div>
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/zepto.min.js"></script>
         <script type="text/javascript" src="js/modules.js"></script>
-        <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript" src="http://10.0.1.12:8080/js/index.js"></script>
 <!-- mustache templates -->
 <script type="text/mustache" id="index-mu">
 <header>
@@ -44,21 +42,55 @@
     </div>
     <div class="topcoat-navigation-bar">
         <form>
-            <input type="text" class="topcoat-text-input" value="" placeholder="Name your list">
+            <input type="text" class="topcoat-text-input" name="title" value="" placeholder="Name your list">
         </form>
     </div>
 </header>
 <div id="scrollable">
-    <div class="topcoat-list__container">
-        <ul class="topcoat-list">
-            <li class="topcoat-list__item">
-                Item 1
-            </li>
-        </ul>
-    </div>
 </div>
 </script>
-
+<script type="text/mustache" id="indexList-mu">
+<div class="topcoat-list__container">
+    <ul class="topcoat-list">
+    {{#rows}}
+        <li class="topcoat-list__item" data-id="{{id}}">
+            {{value}}
+        </li>
+    {{/rows}}
+    </ul>
+</div>
+</script>
+<script type="text/mustache" id="list-mu">
+<header>
+    <div class="topcoat-navigation-bar">
+        <div class="topcoat-navigation-bar__item center full">
+            <h1 class="topcoat-navigation-bar__title">{{title}}</h1>
+        </div>
+    </div>
+    <div class="topcoat-navigation-bar">
+        <form>
+            <input type="text" class="topcoat-text-input" name="title" value="" placeholder="Add an item">
+        </form>
+    </div>
+</header>
+<div id="scrollable">
+</div>
+</script>
+<script type="text/mustache" id="listItems-mu">
+<div class="topcoat-list__container">
+    <ul class="topcoat-list">
+    {{#rows}}
+        <li class="topcoat-list__item" data-id="{{id}}">
+            <label class="topcoat-checkbox__label">
+                <input type="checkbox">
+                <div class="topcoat-checkbox"></div>
+                {{value}}
+            </label>
+        </li>
+    {{/rows}}
+    </ul>
+</div>
+</script>
 
     </body>
 </html>
