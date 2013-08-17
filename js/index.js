@@ -26,6 +26,10 @@ new fastclick.FastClick(document.body)
 
 document.addEventListener("deviceready", appInit, false)
 
+/*
+Initialize the app, connect to the database, draw the initial UI
+*/
+
 function appInit() {
     getConfig(function(err, config){
         window.config = config
@@ -46,6 +50,10 @@ function appReady() {
     })
     goIndex()
 }
+
+/*
+The index UI lists the available todo lists and lets you create new ones.
+*/
 
 function goIndex() {
     $("#content").html(config.t.index())
@@ -71,6 +79,11 @@ function goIndex() {
     }
     window.dbChanged()
 }
+
+/*
+The list UI lets you create todo items and check them off or delete them.
+It also links to a screen for sharing each list with a different set of friends.
+*/
 
 function goList(id) {
     config.db.get(id, function(err, doc){
@@ -139,6 +152,12 @@ function toggleChecked(id) {
         config.db.put(id, doc, function(){})
     })
 }
+
+/*
+The config functions don't have any visibile UI, they are used
+for application bootstrap and then by later state. The result of
+the config setup is stored in `window.config` for easy access.
+*/
 
 function getConfig(done) {
     // get CBL url
@@ -221,6 +240,9 @@ function getConfig(done) {
     };
 }
 
+/*
+Helpers that aren't in a node module and thus aren't in the `modules.js` file
+*/
 
 function jsonform(elem) {
   var o = {}, list = $(elem).serializeArray();
