@@ -47,3 +47,9 @@ form input {
 .topcoat-navigation-bar__item.todo-padded {
 	padding-top:1rem;
 }
+
+.topcoat-button.todo-delete {
+	float:right;
+	line-height: 2rem;
+	display:none;
+}

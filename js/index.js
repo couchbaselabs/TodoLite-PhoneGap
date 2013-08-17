@@ -37,7 +37,11 @@ function appInit() {
 window.dbChanged = function(){}
 
 function appReady() {
-    config.db.changes(function(){
+    var lastSeq;
+    config.db.changes({since : config.info.update_seq}, function(_, ch){
+        if (ch.seq == lastSeq) {return}
+        lastSeq = ch.seq
+        console.log("change", ch)
         window.dbChanged()
     })
     goIndex()
@@ -105,10 +109,25 @@ function goList(id) {
             }], function(err, view) {
                 console.log("items", view)
                 $("#scrollable").html(config.t.listItems(view))
+                $("#scrollable li").on("swipeRight", function() {
+                    var id = $(this).attr("data-id")
+                    $(this).find("button").show().click(function(){
+                        deleteItem(id)
+                        return false;
+                    })
+                })
             })
         }
 
         window.dbChanged()
+    })
+}
+
+function deleteItem(id) {
+    console.log("delete", id)
+    config.db.get(id, function(err, doc){
+        doc._deleted = true;
+        config.db.put(id, doc, function(){})
     })
 }
 
@@ -150,6 +169,7 @@ function getConfig(done) {
                     done(false, {
                         user : user,
                         db : db,
+                        info : info,
                         views : views,
                         server : url,
                         t : t
