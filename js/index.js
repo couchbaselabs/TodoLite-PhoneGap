@@ -94,7 +94,7 @@ function goList(id) {
         })
 
         $("#content .todo-share").click(function(){
-            goShare(id)
+            doShare(id)
         })
 
         $("#content form").submit(function(e) {
@@ -152,6 +152,42 @@ function toggleChecked(id) {
         config.db.put(id, doc, function(){})
     })
 }
+
+/*
+The sharing and login management stuff
+*/
+
+function doShare(id) {
+    if (!config.user) {
+        doLogin(function(err) {
+            console.log("login done", err, config.user)
+        })
+    }
+}
+
+/*
+Login via Facebook
+*/
+
+function doLogin(cb) {
+    doFacebook(function(err, accessToken){
+        if (err) {return console.log(err)}
+        console.log("got accessToken", accessToken)
+    })
+}
+
+function doFacebook(cb) {
+    FacebookInAppBrowser.settings.appId = "501518809925546"
+    FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
+    FacebookInAppBrowser.settings.permissions = 'email'
+    FacebookInAppBrowser.login(function(accessToken){
+        cb(false, accessToken)
+    }, function(err) {
+        cb(err)
+    })
+}
+
+
 
 /*
 The config functions don't have any visibile UI, they are used
