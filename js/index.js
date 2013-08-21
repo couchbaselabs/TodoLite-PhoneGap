@@ -31,9 +31,7 @@ Initialize the app, connect to the database, draw the initial UI
 */
 
 function appInit() {
-    getConfig(function(err, config){
-        window.config = config
-        console.log("config", config)
+    getConfig(function(){
         appReady()
     })
 };
@@ -170,24 +168,63 @@ Login via Facebook
 */
 
 function doLogin(cb) {
-    doFacebook(function(err, accessToken){
-        if (err) {return console.log(err)}
-        console.log("got accessToken", accessToken)
+    doFacebook("http://REMOTEURL", function(err, data){
+        if (err) {return cb(err)}
+        doAfterFirstLogin(cb)
     })
 }
 
-function doFacebook(cb) {
+function doAfterFirstLogin(cb) {
+    addMyUsernameToAllLists(function(err) {
+        if (err) {return cb(err)}
+        triggerSync(cb)
+    })
+}
+
+function doFacebook(remoteUrl, cb) {
     FacebookInAppBrowser.settings.appId = "501518809925546"
     FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
     FacebookInAppBrowser.settings.permissions = 'email'
     FacebookInAppBrowser.login(function(accessToken){
-        cb(false, accessToken)
-    }, function(err) {
+        getEmailForFacebookUser(accessToken, function(err, data) {
+            console.log("got facebook user info", data)
+            data.remote_url = remoteUrl
+            coax.post([config.server, "_facebook_token"], data, function(err, ok){
+                if (err) {return cb(err)}
+                setUser(data.email, cb)
+            })
+        })
+    }, function(err) { // only called if we don't get an access token
         cb(err)
     })
 }
 
+function getEmailForFacebookUser(token, cb) {
+    var url = "https://graph.facebook.com/me?fields=id,name,email&access_token="+token;
+    coax.get(url, function(err, data) {
+        if (err) {
+            cb(err)
+        } else {
+            cb(false, {
+                email : data.email,
+                access_token : token
+            })
+        }
+    })
+}
 
+/*
+Sync Manager: this is run on first login, and on every app boot after that.
+If it
+*/
+
+function triggerSync() {
+    // if we get a 401 on sync, we do this and then retry
+    // doFacebook("http://REMOTEURL", function(err, data){
+    //     if (err) {return cb(err)}
+    //     retrySync()
+    // })
+}
 
 /*
 The config functions don't have any visibile UI, they are used
@@ -221,14 +258,27 @@ function getConfig(done) {
             }
             setupViews(db, function(err, views){
                 getUser(db, function(_, user) {
-                    done(false, {
+                    window.config = {
                         user : user,
+                        setUser : function(email, cb) {
+                            if (window.config.user) {
+                                return cb("user already set")
+                            }
+                            var newUser = {
+                                email : email
+                            }
+                            db.put("_local/user", newUser, function(err, ok){
+                                window.config.user = newUser
+                                cb()
+                            })
+                        },
                         db : db,
                         info : info,
                         views : views,
                         server : url,
                         t : t
-                    })
+                    }
+                    done(false)
                 })
             })
         })
