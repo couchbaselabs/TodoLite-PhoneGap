@@ -1,0 +1,40 @@
+{
+  "log": ["CRUD", "REST+"],
+  "facebook": { "register": true },
+  "databases": {
+    "todos": {
+      "server": "walrus:",
+      "users": {
+        "GUEST": {"disabled": true}
+      },
+      "sync": `
+
+function(doc, oldDoc) {
+  if (doc.type == "item") {
+    if (!doc.listId) {
+      throw({forbidden : "items must have a listId"})
+    }
+    channel("list-"+doc.listId);
+  } else if (doc.type == "list") {
+    channel("list-"+doc._id);
+    if (!doc.owner) {
+      throw({forbidden : "list must have an owner"})
+    }
+    if (oldDoc) {
+      requireUser(oldDoc.owner)
+    }
+    if (Array.isArray(doc.members)) {
+      access(doc.members, "list-"+doc._id);
+    }
+  } else if (doc.type == "profile") {
+    channel("profiles");
+    var user = doc._id.substring(doc._id.indexOf(":")+1);
+    requireUser(user);
+    access(user, "profiles"); // TODO this should use roles
+  }
+}
+
+`
+    }
+  }
+}
