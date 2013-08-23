@@ -31,7 +31,7 @@ Initialize the app, connect to the database, draw the initial UI
 */
 
 function appInit() {
-    getConfig(function(){
+    setupConfig(function(){
         appReady()
     })
 };
@@ -47,6 +47,9 @@ function appReady() {
         window.dbChanged()
     })
     goIndex()
+    if (config.user) {
+        triggerSync()
+    }
 }
 
 /*
@@ -129,7 +132,6 @@ function goList(id) {
                 })
             })
         }
-
         window.dbChanged()
     })
 }
@@ -157,59 +159,83 @@ The sharing and login management stuff
 
 function doShare(id) {
     if (!config.user) {
-        doLogin(function(err) {
+        doFirstLogin(function(err) {
             console.log("login done", err, config.user)
         })
     }
 }
 
 /*
-Login via Facebook
+Login and setup existing data for user account
 */
 
-function doLogin(cb) {
-    doFacebook("http://REMOTEURL", function(err, data){
+function doFirstLogin(cb) {
+    doFacebook(function(err, data){
         if (err) {return cb(err)}
-        doAfterFirstLogin(cb)
+        config.setUser(data, function(err, ok){
+            if (err) {return cb(err)}
+            registerFacebookToken(function(err){
+                if (err) {return cb(err)}
+                addMyUsernameToAllLists(function(err) {
+                    if (err) {return cb(err)}
+                    triggerSync(cb)
+                })
+            })
+        })
     })
 }
 
-function doAfterFirstLogin(cb) {
-    addMyUsernameToAllLists(function(err) {
+function registerFacebookToken(cb) {
+    var registerData = {
+        remote_url : config.site.syncUrl,
+        email : config.user.email,
+        access_token : config.user.access_token
+    }
+    coax.post([config.server, "_facebook_token"], registerData, cb)
+}
+
+function addMyUsernameToAllLists(cb) {
+    config.views(["lists", {include_docs : true}], function(err, view) {
         if (err) {return cb(err)}
-        triggerSync(cb)
+        var docs = [];
+        view.rows.forEach(function(row) {
+            row.doc.owner = config.user.email
+            docs.push(row.doc)
+        })
+        config.db.post("_bulk_docs", {docs:docs}, function(err, ok) {
+            console.log("updated all docs", err, ok)
+            cb(err, ok)
+        })
     })
 }
 
-function doFacebook(remoteUrl, cb) {
+/*
+Get user email address from Facebook, and access code to verify on Sync Gateway
+*/
+
+
+function doFacebook(cb) {
+    // TODO should pull from config?
     FacebookInAppBrowser.settings.appId = "501518809925546"
     FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
     FacebookInAppBrowser.settings.permissions = 'email'
     FacebookInAppBrowser.login(function(accessToken){
-        getEmailForFacebookUser(accessToken, function(err, data) {
+        getFacebookUserInfo(accessToken, function(err, data) {
+            if (err) {return cb(err)}
             console.log("got facebook user info", data)
-            data.remote_url = remoteUrl
-            coax.post([config.server, "_facebook_token"], data, function(err, ok){
-                if (err) {return cb(err)}
-                setUser(data.email, cb)
-            })
+            cb(false, data)
         })
     }, function(err) { // only called if we don't get an access token
         cb(err)
     })
 }
 
-function getEmailForFacebookUser(token, cb) {
-    var url = "https://graph.facebook.com/me?fields=id,name,email&access_token="+token;
+function getFacebookUserInfo(token, cb) {
+    var url = "https://graph.facebook.com/me?fields=id,name,email&access_token="+token
     coax.get(url, function(err, data) {
-        if (err) {
-            cb(err)
-        } else {
-            cb(false, {
-                email : data.email,
-                access_token : token
-            })
-        }
+        if (err) {return cb(err)}
+        data.access_token = token
+        cb(false, data)
     })
 }
 
@@ -218,12 +244,44 @@ Sync Manager: this is run on first login, and on every app boot after that.
 If it
 */
 
-function triggerSync() {
-    // if we get a 401 on sync, we do this and then retry
-    // doFacebook("http://REMOTEURL", function(err, data){
-    //     if (err) {return cb(err)}
-    //     retrySync()
-    // })
+function triggerSync(cb) {
+    console.log("triggerSync")
+    var push = {
+        source : appDbName,
+        target : config.site.syncUrl,
+        continuous : true,
+        auth : {facebook : {email : config.user.email}}
+    }, pull = {
+        target : appDbName,
+        source : config.site.syncUrl,
+        continuous : true,
+        auth : {facebook : {email : config.user.email}}
+    },
+    retryCount = 3,
+    pushSync = syncManager(config.server, push),
+    pullSync = syncManager(config.server, pull)
+
+    pushSync.on("auth-challenge", function() {
+        pushSync.cancel()
+        if (retryCount = 0) {return cb("sync retry limit reached")}
+        retryCount--
+        getNewFacebookToken(function(err, ok) {
+            pushSync.start()
+        })
+    })
+    pushSync.on("error", function(err){
+        cb(err)
+    })
+    pushSync.on("connected", function(){
+        pullSync.start()
+    })
+    pullSync.on("error", function(err){
+        cb(err)
+    })
+    pullSync.on("connected", function(){
+        cb()
+    })
+    pushSync.start()
 }
 
 /*
@@ -232,7 +290,7 @@ for application bootstrap and then by later state. The result of
 the config setup is stored in `window.config` for easy access.
 */
 
-function getConfig(done) {
+function setupConfig(done) {
     // get CBL url
     if (!window.cblite) {
         return done('Couchbase Lite not installed')
@@ -248,26 +306,25 @@ function getConfig(done) {
     });
 
     cblite.getURL(function(err, url) {
-        if (err) {
-            return done(err)
-        }
+        if (err) {return done(err)}
         var db = coax([url, appDbName]);
         setupDb(db, function(err, info){
-            if (err) {
-                return done(err);
-            }
+            if (err) {return done(err)}
             setupViews(db, function(err, views){
-                getUser(db, function(_, user) {
+                if (err) {return done(err)}
+                getUser(db, function(err, user) {
+                    if (err) {return done(err)}
                     window.config = {
+                        site : {
+                            syncUrl : "http://mineral.local:4984/todos"
+                        },
                         user : user,
-                        setUser : function(email, cb) {
+                        setUser : function(newUser, cb) {
                             if (window.config.user) {
                                 return cb("user already set")
                             }
-                            var newUser = {
-                                email : email
-                            }
                             db.put("_local/user", newUser, function(err, ok){
+                                if (err) {return cb(err)}
                                 window.config.user = newUser
                                 cb()
                             })
@@ -278,7 +335,11 @@ function getConfig(done) {
                         server : url,
                         t : t
                     }
-                    done(false)
+                    if (window.config.user) {
+                        registerFacebookToken(done)
+                    } else {
+                        done(false)
+                    }
                 })
             })
         })
@@ -345,3 +406,40 @@ function jsonform(elem) {
   };
   return o;
 };
+
+/*
+Sync manager module TODO extract to NPM
+*/
+
+function syncManager(serverUrl, syncDefinition) {
+    var handlers = {}
+
+    function callHandlers(name, data) {
+
+    }
+
+    function doStartPost() {
+        var callBack;
+        if (syncDefinition.continuous) {
+            callBack = function(err, ok) {
+                if (err) {callHandlers("error", err)}
+            }
+        } else {
+            callBack = function(err, ok) {
+                if (err) {return callHandlers("error", err)}
+                callHandlers("connected", ok)
+            }
+        }
+        var xhr = coax.post([serverUrl, "_replicate"], syncDefinition, callBack)
+
+    }
+
+    return {
+        start : doStartPost,
+        cancel : doCancelPost,
+        on : function(name, cb) {
+            handlers[name] = handlers[name] || []
+            handlers[name].push(cb)
+        }
+    }
+}
