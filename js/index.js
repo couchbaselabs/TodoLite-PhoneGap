@@ -48,7 +48,11 @@ function appReady() {
     })
     goIndex()
     if (config.user) {
-        triggerSync()
+        triggerSync(function(err) {
+            if (err) {
+                console.log("error on sync", err)
+            }
+        })
     }
 }
 
@@ -239,31 +243,43 @@ function getFacebookUserInfo(token, cb) {
     })
 }
 
+function getNewFacebookToken(cb) {
+    // should be like doFirstLogin() but modify the user and
+    // doesn't need to put the owner on all the lists.
+    cb()
+}
+
 /*
 Sync Manager: this is run on first login, and on every app boot after that.
-If it
+
+The way it works is with an initial single push replication. When that
+completes, we know we have a valid connection, so we can trigger a continuous
+push and pull
+
 */
 
 function triggerSync(cb) {
-    console.log("triggerSync")
-    var push = {
-        source : appDbName,
-        target : config.site.syncUrl,
-        continuous : true,
-        auth : {facebook : {email : config.user.email}}
-    }, pull = {
-        target : appDbName,
-        source : config.site.syncUrl,
-        continuous : true,
+    var remote = {
+        url : config.site.syncUrl,
         auth : {facebook : {email : config.user.email}}
     },
+    push = {
+        source : appDbName,
+        target : remote
+    }, pull = {
+        target : appDbName,
+        source : remote,
+        continuous : true
+    },
     retryCount = 3,
+
     pushSync = syncManager(config.server, push),
     pullSync = syncManager(config.server, pull)
 
+    console.log("pushSync", push)
+
     pushSync.on("auth-challenge", function() {
-        pushSync.cancel()
-        if (retryCount = 0) {return cb("sync retry limit reached")}
+        if (retryCount == 0) {return cb("sync retry limit reached")}
         retryCount--
         getNewFacebookToken(function(err, ok) {
             pushSync.start()
@@ -279,9 +295,16 @@ function triggerSync(cb) {
         cb(err)
     })
     pullSync.on("connected", function(){
-        cb()
+        push.continuous = true;
+        var continuousPush = syncManager(config.server, push)
+        continuousPush.on("connected", function(){
+            cb()
+        })
+        continuousPush.start()
     })
-    pushSync.start()
+    setTimeout(function(){
+        pushSync.start()
+    }, 10000)
 }
 
 /*
@@ -415,28 +438,48 @@ function syncManager(serverUrl, syncDefinition) {
     var handlers = {}
 
     function callHandlers(name, data) {
-
+        handlers[name].forEach(function(h){
+            h(data)
+        })
     }
 
     function doStartPost() {
         var callBack;
         if (syncDefinition.continuous) {
-            callBack = function(err, ok) {
-                if (err) {callHandlers("error", err)}
+            // auth errors not detected for continuous sync
+            // we could use _active_tasks?feed=continuous for this
+            // but we don't need that code for this app...
+            callBack = function(err, info) {
+                console.log("continuous sync callBack", err, info, syncDefinition)
+                if (err) {
+                    callHandlers("error", err)
+                } else {
+                    callHandlers("connected", info)
+                }
             }
         } else {
-            callBack = function(err, ok) {
-                if (err) {return callHandlers("error", err)}
-                callHandlers("connected", ok)
+            callBack = function(err, info) {
+                console.log("sync callBack", err, info, syncDefinition)
+                if (err) {
+                    if (info.status == 401) {
+                        err.status = info.status;
+                        callHandlers("auth-challenge", err)
+                    } else {
+                        err.status = info.status;
+                        callHandlers("error", err)
+                    }
+                } else {
+                    callHandlers("connected", info)
+                }
+
             }
         }
-        var xhr = coax.post([serverUrl, "_replicate"], syncDefinition, callBack)
-
+        console.log("start sync", syncDefinition, callBack)
+        coax.post([serverUrl, "_replicate"], syncDefinition, callBack)
     }
 
     return {
         start : doStartPost,
-        cancel : doCancelPost,
         on : function(name, cb) {
             handlers[name] = handlers[name] || []
             handlers[name].push(cb)
