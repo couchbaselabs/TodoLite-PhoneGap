@@ -60,8 +60,13 @@ function appReady() {
 The index UI lists the available todo lists and lets you create new ones.
 */
 
+function drawContent(html) {
+    scroll(0,0)
+    $("#content").html(html)
+}
+
 function goIndex() {
-    $("#content").html(config.t.index())
+    drawContent(config.t.index())
     if (!config.user) {
         $(".todo-login").show().click(function(){
             doFirstLogin(function(err) {
@@ -109,7 +114,7 @@ It also links to a screen for sharing each list with a different set of friends.
 
 function goList(id) {
     config.db.get(id, function(err, doc){
-        $("#content").html(config.t.list(doc))
+        drawContent(config.t.list(doc))
 
         $("#content .todo-index").click(function(){
             goIndex()
@@ -212,7 +217,7 @@ function goImage(id) {
     window.dbChanged = function(){}
     config.db(id, function(err, doc){
         doc.image_path = config.db([id,"image.jpg"]).pax.toString()
-        $("#content").html(config.t.image(doc))
+        drawContent(config.t.image(doc))
         $("#content .todo-image-back").click(function(){
             goList(doc.listId)
         })
@@ -261,7 +266,7 @@ function goShare(id) {
                 };
             };
 
-            $("#content").html(config.t.share(view))
+            drawContent(config.t.share(view))
 
             $("#content .todo-share-back").click(function(){
                 goList(id)
