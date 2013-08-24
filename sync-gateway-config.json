@@ -30,6 +30,9 @@ function(doc, oldDoc) {
   } else if (doc.type == "profile") {
     channel("profiles");
     var user = doc._id.substring(doc._id.indexOf(":")+1);
+    if (user !== doc.user) {
+      throw({forbidden : "profile user field mismatch from id"})
+    }
     requireUser(user);
     access(user, "profiles"); // TODO this should use roles
   }

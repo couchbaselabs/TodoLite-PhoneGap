@@ -53,3 +53,9 @@ form input {
 	line-height: 2rem;
 	display:none;
 }
+
+.topcoat-navigation-bar__title.todo-unbold {
+	font-weight: 100;
+}
+
+

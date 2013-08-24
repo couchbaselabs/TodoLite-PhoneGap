@@ -168,8 +168,63 @@ function doShare(id) {
     if (!config.user) {
         doFirstLogin(function(err) {
             console.log("login done", err, config.user)
+            goShare(id)
         })
+    } else {
+        goShare(id)
     }
+}
+
+function goShare(id) {
+    window.dbChanged = function(){}
+    config.db(id, function(err, doc) {
+        config.views("profiles", function(err, view){
+            view.title = doc.title
+
+            // fold over the view and mark members as checked
+            var members = (doc.members || []).concat(doc.owner);
+
+            for (var i = view.rows.length - 1; i >= 0; i--) {
+                var row = view.rows[i]
+                for (var j = members.length - 1; j >= 0; j--) {
+                    var member = members[j]
+                    console.log("row", row.value, member)
+                    if (row.value == member) {
+                        row.checked = "checked"
+                    }
+                };
+            };
+
+            $("#content").html(config.t.share(view))
+
+            $("#content .todo-share-back").click(function(){
+                goList(id)
+            })
+
+            $("#scrollable").on("click", "li", function() {
+                var user = $(this).attr("data-id");
+                if (user !== doc.owner) {
+                    toggleShare(doc, user, function(){
+                        goShare(id)
+                    })
+                } else {
+                    goShare(id)
+                }
+            })
+        })
+    })
+}
+
+function toggleShare(doc, user, cb) {
+    doc.members = doc.members || [];
+    var i = doc.members.indexOf(user)
+    if (i === -1) {
+        doc.members.push(user)
+    } else {
+        doc.members.splice(i,1)
+    }
+    console.log("members", doc.members)
+    config.db.post(doc, cb)
 }
 
 /*
@@ -183,9 +238,11 @@ function doFirstLogin(cb) {
             if (err) {return cb(err)}
             registerFacebookToken(function(err){
                 if (err) {return cb(err)}
-                addMyUsernameToAllLists(function(err) {
-                    if (err) {return cb(err)}
-                    triggerSync(cb)
+                createMyProfile(function(err){
+                    addMyUsernameToAllLists(function(err) {
+                        if (err) {return cb(err)}
+                        triggerSync(cb)
+                    })
                 })
             })
         })
@@ -214,6 +271,14 @@ function addMyUsernameToAllLists(cb) {
             cb(err, ok)
         })
     })
+}
+
+function createMyProfile(cb) {
+    config.db.put("profile:"+config.user.email, {
+        type : "profile",
+        name : config.user.name,
+        user : config.user.email
+    }, cb)
 }
 
 /*
@@ -378,7 +443,7 @@ function setupConfig(done) {
     }
 
     function setupViews(db, cb) {
-        var design = "_design/todo5"
+        var design = "_design/todo6"
         db.put(design, {
             views : {
                 lists : {
@@ -393,6 +458,13 @@ function setupConfig(done) {
                         if (doc.type == "item" && doc.created_at && doc.title && doc.listId) {
                             emit([doc.listId, !doc.checked, doc.created_at],
                                 {checked : doc.checked ? "checked" : "", title : doc.title})
+                        }
+                    }.toString()
+                },
+                profiles : {
+                    map : function(doc){
+                        if (doc.type == "profile" && doc.user && doc.name) {
+                            emit(doc.name, doc.user)
                         }
                     }.toString()
                 }
