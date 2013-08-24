@@ -37,6 +37,35 @@ form input {
     width:100%;
 }
 
+.camera {
+	background: transparent url(../img/camera.svg);
+	background-repeat: no-repeat;
+	background-size: contain;
+	width: 30px;
+	height: 30px;
+	position:absolute;
+	right:1rem;
+}
+
+.todo-list-name {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+label.todo-list-item {
+	width: -webkit-calc(100% - 30px);
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	float:left;
+}
+
+br.clear {
+	height: 0;
+	clear: both;
+}
+
 .topcoat-button.todo-small {
 	line-height: 2rem;
 	padding: 0 0.6rem 2px 0.6rem;
@@ -49,7 +78,8 @@ form input {
 }
 
 .topcoat-button.todo-delete {
-	float:right;
+	position:absolute;
+	right:1rem;
 	line-height: 2rem;
 	display:none;
 }

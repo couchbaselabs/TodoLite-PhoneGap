@@ -61,7 +61,7 @@
 <div class="topcoat-list__container">
     <ul class="topcoat-list">
     {{#rows}}
-        <li class="topcoat-list__item" data-id="{{id}}">
+        <li class="todo-list-name topcoat-list__item" data-id="{{id}}">
             {{value}}
             <button class="todo-delete topcoat-button">Delete</button>
         </li>
@@ -96,14 +96,16 @@
     <ul class="topcoat-list">
     {{#rows}}
         <li class="topcoat-list__item" data-id="{{id}}">
-            <label class="topcoat-checkbox__label">
+            <label class="todo-list-item topcoat-checkbox__label">
                 {{#value}}
                     <input {{checked}} type="checkbox">
                     <div class="topcoat-checkbox"></div>
                     {{title}}
                 {{/value}}
             </label>
+            <div class="camera"></div>
             <button class="todo-delete topcoat-button">Delete</button>
+            <br class="clear"/>
         </li>
     {{/rows}}
     </ul>
@@ -135,7 +137,6 @@
                         <div class="topcoat-checkbox"></div>
                         {{key}}
                 </label>
-                <button class="todo-delete topcoat-button">Delete</button>
             </li>
         {{/rows}}
         </ul>

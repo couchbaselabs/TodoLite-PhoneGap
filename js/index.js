@@ -125,15 +125,18 @@ function goList(id) {
             doc.type = "item"
             doc.listId = id
             doc.created_at = new Date()
-            console.log(doc)
             config.db.post(doc, function(err, ok) {
                 $("#content form input").val("")
             })
         })
 
-        $("#scrollable").on("click", "li", function() {
-            var id = $(this).attr("data-id");
-            toggleChecked(id)
+        $("#scrollable").on("click", "li", function(e) {
+            var id = $(this).attr("data-id")
+            if ($(e.target).hasClass("camera")) {
+                doCamera(id)
+            } else {
+                toggleChecked(id)
+            }
         })
 
         window.dbChanged = function() {
@@ -148,7 +151,6 @@ function goList(id) {
                     var id = $(this).attr("data-id")
                     $(this).find("button").show().click(function(){
                         deleteItem(id)
-                        return false;
                     })
                 })
             })
@@ -172,6 +174,10 @@ function toggleChecked(id) {
         doc.created_at = new Date()
         config.db.put(id, doc, function(){})
     })
+}
+
+function doCamera(id) {
+    console.log("camera", id)
 }
 
 /*
