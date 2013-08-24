@@ -133,7 +133,11 @@ function goList(id) {
         $("#scrollable").on("click", "li", function(e) {
             var id = $(this).attr("data-id")
             if ($(e.target).hasClass("camera")) {
-                doCamera(id)
+                if ($(e.target).hasClass("image")) {
+                    goImage(id)
+                } else {
+                    doCamera(id)
+                }
             } else {
                 toggleChecked(id)
             }
@@ -178,6 +182,48 @@ function toggleChecked(id) {
 
 function doCamera(id) {
     console.log("camera", id)
+    if (!(navigator.camera && navigator.camera.getPicture)) {return}
+
+    navigator.camera.getPicture(function(imageData) {
+        config.db(id, function(err, doc){
+            doc._attachments = {
+              "image.jpg" : {
+                content_type : "image/jpg",
+                data : imageData
+              }
+            }
+            config.db.post(doc, function(err, ok) {})
+        })
+    }, function(message) { // onFail
+        // alert('Failed because: ' + message);
+    }, {
+        quality: 50,
+        targetWidth : 1000,
+        targetHeight : 1000,
+        destinationType: Camera.DestinationType.DATA_URL
+    });
+}
+
+/*
+Display a photo for an item if it exists.
+*/
+
+function goImage(id) {
+    window.dbChanged = function(){}
+    config.db(id, function(err, doc){
+        doc.image_path = config.db([id,"image.jpg"]).pax.toString()
+        $("#content").html(config.t.image(doc))
+        $("#content .todo-image-back").click(function(){
+            goList(doc.listId)
+        })
+        $("#content .todo-image-del").click(function(){
+            delete doc.image_path
+            delete doc._attachments["image.jpg"]
+            config.db.post(doc, function(err, ok) {
+                goList(doc.listId)
+            })
+        })
+    })
 }
 
 /*
@@ -464,7 +510,7 @@ function setupConfig(done) {
     }
 
     function setupViews(db, cb) {
-        var design = "_design/todo6"
+        var design = "_design/todo7"
         db.put(design, {
             views : {
                 lists : {
@@ -478,7 +524,11 @@ function setupConfig(done) {
                     map : function(doc) {
                         if (doc.type == "item" && doc.created_at && doc.title && doc.listId) {
                             emit([doc.listId, !doc.checked, doc.created_at],
-                                {checked : doc.checked ? "checked" : "", title : doc.title})
+                                {
+                                    checked : doc.checked ? "checked" : "",
+                                    title : doc.title,
+                                    image : (doc._attachments && doc._attachments["image.jpg"])
+                                })
                         }
                     }.toString()
                 },

@@ -96,16 +96,17 @@
     <ul class="topcoat-list">
     {{#rows}}
         <li class="topcoat-list__item" data-id="{{id}}">
+        {{#value}}
             <label class="todo-list-item topcoat-checkbox__label">
-                {{#value}}
+
                     <input {{checked}} type="checkbox">
                     <div class="topcoat-checkbox"></div>
                     {{title}}
-                {{/value}}
             </label>
-            <div class="camera"></div>
+            <div class="camera {{#image}}image{{/image}}"></div>
             <button class="todo-delete topcoat-button">Delete</button>
             <br class="clear"/>
+        {{/value}}
         </li>
     {{/rows}}
     </ul>
@@ -141,6 +142,29 @@
         {{/rows}}
         </ul>
     </div>
+</div>
+</script>
+<script type="text/mustache" id="image-mu">
+<header>
+    <div class="topcoat-navigation-bar">
+        <div class="topcoat-navigation-bar__item center full">
+            <h1 class="topcoat-navigation-bar__title">{{title}}</h1>
+        </div>
+    </div>
+    <div class="topcoat-navigation-bar">
+        <div class="topcoat-navigation-bar__item left quarter todo-padded">
+            <button class="todo-image-back topcoat-button todo-small">&larr;</button>
+        </div>
+        <div class="topcoat-navigation-bar__item center half">
+            <h2 class="topcoat-navigation-bar__title todo-unbold">Image</h2>
+        </div>
+        <div class="topcoat-navigation-bar__item right quarter todo-padded">
+            <button class="todo-image-del topcoat-button todo-small">&#9746;</button>
+        </div>
+    </div>
+</header>
+<div id="scrollable">
+    <img src="{{image_path}}" class="todo-image" />
 </div>
 </script>
     </body>
