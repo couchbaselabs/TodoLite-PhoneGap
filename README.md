@@ -54,6 +54,7 @@ If you are running your own server, launch it by pointing it at the `sync-gatewa
 
 * Currently support for Android is limited by a few minor API compatiblity issues. These are probably fixed by the time you are reading this.
 * Redraw flash should be avoided. This is especially apparent on long lists.
+* Lists are too wide in portrait mode on iPad
 
 ## Community
 
