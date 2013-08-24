@@ -62,6 +62,13 @@ The index UI lists the available todo lists and lets you create new ones.
 
 function goIndex() {
     $("#content").html(config.t.index())
+    if (!config.user) {
+        $(".todo-login").show().click(function(){
+            doFirstLogin(function(err) {
+                goIndex()
+            })
+        })
+    }
     $("#content form").submit(function(e) {
         e.preventDefault()
         var doc = jsonform(this)
@@ -414,6 +421,7 @@ function setupConfig(done) {
                     if (err) {return done(err)}
                     window.config = {
                         site : {
+                            // syncUrl : "http://sync.couchbasecloud.com:4984/todos"
                             syncUrl : "http://mineral.local:4984/todos"
                         },
                         user : user,

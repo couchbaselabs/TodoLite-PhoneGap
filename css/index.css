@@ -54,6 +54,10 @@ form input {
 	display:none;
 }
 
+.topcoat-button.todo-login {
+	display:none;
+}
+
 .topcoat-navigation-bar__title.todo-unbold {
 	font-weight: 100;
 }
