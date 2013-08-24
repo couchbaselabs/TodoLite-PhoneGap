@@ -83,6 +83,13 @@ function goIndex() {
         config.views(["lists", {descending : true}], function(err, view) {
             console.log("lists", view)
             $("#scrollable").html(config.t.indexList(view))
+            $("#scrollable li").on("swipeRight", function() {
+                var id = $(this).attr("data-id")
+                $(this).find("button").show().click(function(){
+                    deleteItem(id)
+                    return false;
+                })
+            })
         })
     }
     window.dbChanged()
