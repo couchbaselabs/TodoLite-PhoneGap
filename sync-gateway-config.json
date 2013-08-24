@@ -1,5 +1,5 @@
 {
-  "log": ["CRUD", "REST+"],
+  "log": ["CRUD", "REST+", "Access"],
   "facebook": { "register": true },
   "databases": {
     "todos": {
@@ -23,6 +23,7 @@ function(doc, oldDoc) {
     if (oldDoc) {
       requireUser(oldDoc.owner)
     }
+    access(doc.owner, "list-"+doc._id);
     if (Array.isArray(doc.members)) {
       access(doc.members, "list-"+doc._id);
     }

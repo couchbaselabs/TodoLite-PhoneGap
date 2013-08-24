@@ -67,6 +67,9 @@ function goIndex() {
         var doc = jsonform(this)
         doc.type = "list"
         doc.created_at = new Date()
+        if (config.user && config.user.email) {
+            doc.owner = config.user.email
+        }
         console.log(doc)
         config.db.post(doc, function(err, ok) {
             $("#content form input").val("")
@@ -244,6 +247,7 @@ function getFacebookUserInfo(token, cb) {
 }
 
 function getNewFacebookToken(cb) {
+    alert("getNewFacebookToken")
     // should be like doFirstLogin() but modify the user and
     // doesn't need to put the owner on all the lists.
     cb()
@@ -265,7 +269,8 @@ function triggerSync(cb) {
     },
     push = {
         source : appDbName,
-        target : remote
+        target : remote,
+        continuous : true
     }, pull = {
         target : appDbName,
         source : remote,
@@ -279,11 +284,14 @@ function triggerSync(cb) {
     console.log("pushSync", push)
 
     pushSync.on("auth-challenge", function() {
-        if (retryCount == 0) {return cb("sync retry limit reached")}
-        retryCount--
-        getNewFacebookToken(function(err, ok) {
-            pushSync.start()
-        })
+        pushSync.cancel(function(err, ok) {
+            if (err) {return}
+            if (retryCount == 0) {return cb("sync retry limit reached")}
+            retryCount--
+            getNewFacebookToken(function(err, ok) {
+                pushSync.start()
+            })
+       })
     })
     pushSync.on("error", function(err){
         cb(err)
@@ -295,16 +303,11 @@ function triggerSync(cb) {
         cb(err)
     })
     pullSync.on("connected", function(){
-        push.continuous = true;
-        var continuousPush = syncManager(config.server, push)
-        continuousPush.on("connected", function(){
-            cb()
-        })
-        continuousPush.start()
+        cb()
     })
-    setTimeout(function(){
+    // setTimeout(function(){
         pushSync.start()
-    }, 10000)
+    // }, 10000)
 }
 
 /*
@@ -438,12 +441,44 @@ function syncManager(serverUrl, syncDefinition) {
     var handlers = {}
 
     function callHandlers(name, data) {
-        handlers[name].forEach(function(h){
+        (handlers[name]||[]).forEach(function(h){
             h(data)
         })
     }
 
+    function doCancelPost(cb) {
+        var cancelDef = JSON.parse(JSON.stringify(syncDefinition))
+        cancelDef.cancel = true
+        coax.post([serverUrl, "_replicate"], cancelDef, function(err, info){
+            if (err) {
+                callHandlers("error", err)
+                if (cb) {cb(err, info)}
+            } else {
+                callHandlers("cancelled", info)
+                if (cb) {cb(err, info)}
+            }
+        })
+    }
+
     function doStartPost() {
+        var tooLate;
+        function pollForStatus(info, wait) {
+            if (wait) {
+                setTimeout(function() {
+                    tooLate = true
+                }, wait)
+            }
+            processTaskInfo(info.session_id, function(done){
+                if (!done && !tooLate) {
+                    setTimeout(function() {
+                        pollForStatus(info)
+                    }, 200)
+                } else if (tooLate) {
+                    callHandlers("error", "timeout")
+                }
+            })
+        }
+
         var callBack;
         if (syncDefinition.continuous) {
             // auth errors not detected for continuous sync
@@ -454,10 +489,11 @@ function syncManager(serverUrl, syncDefinition) {
                 if (err) {
                     callHandlers("error", err)
                 } else {
-                    callHandlers("connected", info)
+                    pollForStatus(info, 10000)
+                    callHandlers("started", info)
                 }
             }
-        } else {
+        } else { // non-continuous
             callBack = function(err, info) {
                 console.log("sync callBack", err, info, syncDefinition)
                 if (err) {
@@ -474,15 +510,48 @@ function syncManager(serverUrl, syncDefinition) {
 
             }
         }
-        console.log("start sync", syncDefinition, callBack)
+        console.log("start sync", syncDefinition)
         coax.post([serverUrl, "_replicate"], syncDefinition, callBack)
     }
 
-    return {
+    function processTaskInfo(id, cb) {
+        taskInfo(id, function(err, task) {
+            console.log("task", task)
+            publicAPI.task = task
+            if (task.error && task.error[0] == 401) {
+                cb(true)
+                callHandlers("auth-challenge", {status : 401, error : task.error[1]})
+            } else if (task.status == "Idle" || task.status == "Stopped" || (/Processed/.test(task.status) && !/Processed 0/.test(task.status))) {
+                cb(true)
+                callHandlers("connected", task)
+            } else if (/Processed 0 \/ 0 changes/.test(task.status)) {
+                cb(true) // I think we only get this if we are connected
+                callHandlers("connected", task)
+            } else {
+                cb(false) // not done
+            }
+        })
+    }
+
+    function taskInfo(id, cb) {
+        coax([serverUrl,"_active_tasks"], function(err, tasks) {
+            var me;
+            for (var i = tasks.length - 1; i >= 0; i--) {
+                if (tasks[i].task == id) {
+                    me = tasks[i]
+                }
+            }
+            cb(false, me);
+        })
+    }
+
+    var publicAPI = {
         start : doStartPost,
+        cancel : doCancelPost,
         on : function(name, cb) {
             handlers[name] = handlers[name] || []
             handlers[name].push(cb)
         }
     }
+    return publicAPI;
 }
