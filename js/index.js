@@ -80,7 +80,7 @@ function goIndex() {
         doc.type = "list"
         doc.created_at = new Date()
         if (config.user && config.user.email) {
-            doc.owner = config.user.email
+            doc.owner = "p:"+config.user.user_id
         }
         console.log(doc)
         config.db.post(doc, function(err, ok) {
@@ -108,7 +108,7 @@ function goIndex() {
 }
 
 /*
-The list UI lets you create todo items and check them off or delete them.
+The list UI lets you create todo tasks and check them off or delete them.
 It also links to a screen for sharing each list with a different set of friends.
 */
 
@@ -127,9 +127,9 @@ function goList(id) {
         $("#content form").submit(function(e) {
             e.preventDefault()
             var doc = jsonform(this)
-            doc.type = "item"
-            doc.listId = id
-            doc.created_at = new Date()
+            doc.type = "task"
+            doc.list_id = id
+            doc.updated_at = doc.created_at = new Date()
             config.db.post(doc, function(err, ok) {
                 $("#content form input").val("")
             })
@@ -149,12 +149,12 @@ function goList(id) {
         })
 
         window.dbChanged = function() {
-            config.views(["items", {
+            config.views(["tasks", {
                 startkey : [id, {}],
                 endkey : [id],
                 descending : true
             }], function(err, view) {
-                console.log("items", view)
+                console.log("tasks", view)
                 $("#scrollable").html(config.t.listItems(view))
                 $("#scrollable li").on("swipeRight", function() {
                     var id = $(this).attr("data-id")
@@ -180,7 +180,7 @@ function toggleChecked(id) {
     console.log("toggle", id)
     config.db.get(id, function(err, doc){
         doc.checked = !doc.checked
-        doc.created_at = new Date()
+        doc.updated_at = new Date()
         config.db.put(id, doc, function(){})
     })
 }
@@ -210,7 +210,7 @@ function doCamera(id) {
 }
 
 /*
-Display a photo for an item if it exists.
+Display a photo for an task if it exists.
 */
 
 function goImage(id) {
@@ -259,8 +259,8 @@ function goShare(id) {
                 var row = view.rows[i]
                 for (var j = members.length - 1; j >= 0; j--) {
                     var member = members[j]
-                    console.log("row", row.value, member)
-                    if (row.value == member) {
+                    console.log("row", row.id, member)
+                    if (row.id == member) {
                         row.checked = "checked"
                     }
                 };
@@ -334,7 +334,7 @@ function addMyUsernameToAllLists(cb) {
         if (err) {return cb(err)}
         var docs = [];
         view.rows.forEach(function(row) {
-            row.doc.owner = config.user.email
+            row.doc.owner = "p:"+config.user.user_id
             docs.push(row.doc)
         })
         config.db.post("_bulk_docs", {docs:docs}, function(err, ok) {
@@ -347,8 +347,9 @@ function addMyUsernameToAllLists(cb) {
 function createMyProfile(cb) {
     var profileData = JSON.parse(JSON.stringify(config.user))
     profileData.type = "profile"
-    profileData.user = profileData.email
-    config.db.put("profile:"+config.user.email, profileData, cb)
+    profileData.user_id = profileData.email
+    delete profileData.email
+    config.db.put("p:"+profileData.user_id, profileData, cb)
 }
 
 /*
@@ -478,13 +479,14 @@ function setupConfig(done) {
                     window.config = {
                         site : {
                             // syncUrl : "http://sync.couchbasecloud.com:4984/todos"
-                            syncUrl : "http://mineral.local:4984/todos"
+                            syncUrl : "http://10.0.1.12:4984/todos/"
                         },
                         user : user,
                         setUser : function(newUser, cb) {
                             if (window.config.user) {
                                 return cb("user already set")
                             }
+                            newUser.user_id = newUser.email
                             db.put("_local/user", newUser, function(err, ok){
                                 if (err) {return cb(err)}
                                 window.config.user = newUser
@@ -514,7 +516,7 @@ function setupConfig(done) {
     }
 
     function setupViews(db, cb) {
-        var design = "_design/todo7"
+        var design = "_design/todo8"
         db.put(design, {
             views : {
                 lists : {
@@ -524,10 +526,10 @@ function setupConfig(done) {
                         }
                     }.toString()
                 },
-                items : {
+                tasks : {
                     map : function(doc) {
-                        if (doc.type == "item" && doc.created_at && doc.title && doc.listId) {
-                            emit([doc.listId, !doc.checked, doc.created_at],
+                        if (doc.type == "task" && doc.updated_at && doc.title && doc.list_id) {
+                            emit([doc.list_id, !doc.checked, doc.updated_at],
                                 {
                                     checked : doc.checked ? "checked" : "",
                                     title : doc.title,
@@ -538,8 +540,8 @@ function setupConfig(done) {
                 },
                 profiles : {
                     map : function(doc){
-                        if (doc.type == "profile" && doc.user && doc.name) {
-                            emit(doc.name, doc.user)
+                        if (doc.type == "profile" && doc.user_id && doc.name) {
+                            emit(doc.name)
                         }
                     }.toString()
                 }

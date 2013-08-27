@@ -84,7 +84,7 @@
     </div>
     <div class="topcoat-navigation-bar">
         <form>
-            <input type="text" class="topcoat-text-input" name="title" value="" placeholder="Add an item">
+            <input type="text" class="topcoat-text-input" name="title" value="" placeholder="Add a task">
         </form>
     </div>
 </header>
@@ -132,7 +132,7 @@
     <div class="topcoat-list__container">
         <ul class="topcoat-list" id="share-list">
         {{#rows}}
-            <li class="topcoat-list__item" data-id="{{value}}">
+            <li class="topcoat-list__item" data-id="{{id}}">
                 <label class="topcoat-checkbox__label">
                         <input {{checked}} type="checkbox">
                         <div class="topcoat-checkbox"></div>
