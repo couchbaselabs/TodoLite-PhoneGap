@@ -345,11 +345,10 @@ function addMyUsernameToAllLists(cb) {
 }
 
 function createMyProfile(cb) {
-    config.db.put("profile:"+config.user.email, {
-        type : "profile",
-        name : config.user.name,
-        user : config.user.email
-    }, cb)
+    var profileData = JSON.parse(JSON.stringify(config.user))
+    profileData.type = "profile"
+    profileData.user = profileData.email
+    config.db.put("profile:"+config.user.email, profileData, cb)
 }
 
 /*
