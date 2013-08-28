@@ -307,12 +307,21 @@ function doFirstLogin(cb) {
         if (err) {return cb(err)}
         config.setUser(data, function(err, ok){
             if (err) {return cb(err)}
-            registerFacebookToken(function(err){
-                if (err) {return cb(err)}
+            registerFacebookToken(function(err,ok){
+                console.log("registerFacebookToken done "+JSON.stringify(err))
+                if (err) {
+                    console.log("registerFacebookToken err "+JSON.stringify([err, ok]))
+                    return cb(err)
+                }
                 createMyProfile(function(err){
+                    console.log("createMyProfile done "+JSON.stringify(err))
                     addMyUsernameToAllLists(function(err) {
+                        console.log("addMyUsernameToAllLists done "+JSON.stringify(err))
                         if (err) {return cb(err)}
-                        triggerSync(cb)
+                        triggerSync(function(err, ok){
+                            console.log("triggerSync done "+JSON.stringify(err))
+                            cb(err, ok)
+                        })
                     })
                 })
             })
@@ -326,6 +335,7 @@ function registerFacebookToken(cb) {
         email : config.user.email,
         access_token : config.user.access_token
     }
+    console.log("registerFacebookToken POST "+JSON.stringify(registerData))
     coax.post([config.server, "_facebook_token"], registerData, cb)
 }
 
@@ -345,10 +355,12 @@ function addMyUsernameToAllLists(cb) {
 }
 
 function createMyProfile(cb) {
+    console.log("createMyProfile user "+JSON.stringify(config.user))
     var profileData = JSON.parse(JSON.stringify(config.user))
     profileData.type = "profile"
     profileData.user_id = profileData.email
     delete profileData.email
+    console.log("createMyProfile put "+JSON.stringify(profileData))
     config.db.put("p:"+profileData.user_id, profileData, cb)
 }
 
@@ -478,7 +490,7 @@ function setupConfig(done) {
                     if (err) {return done(err)}
                     window.config = {
                         site : {
-                            // syncUrl : "http://sync.couchbasecloud.com:4984/todos"
+                            // syncUrl : "http://sync.couchbasecloud.com:4984/todos3"
                             syncUrl : "http://10.0.1.12:4984/todos/"
                         },
                         user : user,
@@ -487,8 +499,10 @@ function setupConfig(done) {
                                 return cb("user already set")
                             }
                             newUser.user_id = newUser.email
+                            console.log("setUser "+JSON.stringify(newUser))
                             db.put("_local/user", newUser, function(err, ok){
                                 if (err) {return cb(err)}
+                                console.log("setUser ok")
                                 window.config.user = newUser
                                 cb()
                             })

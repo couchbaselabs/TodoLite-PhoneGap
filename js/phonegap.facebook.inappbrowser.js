@@ -27,15 +27,27 @@
                   authorize_url += "&scope=" + this.settings.permissions;
                 }
 
-            var faceView, access_token = null,
+            var faceView, access_token = null, redirectUrl = this.settings.redirectUrl;
                 callback = function(location) {
                   console.log("[FacebookInAppBrowser] Event 'loadstart': " + JSON.stringify(location));
+
+                  if (location.url.indexOf("https://m./") == 0) {
+                    // workaround for facebook bug introduced 8/27
+                    var newLoc = location.url.replace("https://m./", "https://m.facebook.com/")
+                    console.log("[FacebookInAppBrowser] workaround goto "+newLoc)
+                    // faceView.executeScript({code : 'window.location = "'+newLoc+'"'})
+                    faceView.close()
+                    faceView = window.open(newLoc, '_blank', 'location=no');
+                    faceView.addEventListener('loadstart', callback);
+                    faceView.addEventListener('exit', onExit);
+                  }
 
                   if (location.url.indexOf("access_token") !== -1) {
                     // Success
                     access_token = location.url.match(/access_token=(.*)$/)[1].split('&expires_in')[0];
                     console.log("[FacebookInAppBrowser] Logged in. Token: " + access_token);
                     faceView.close();
+
 
                     if(typeof successCallback !== 'undefined' && typeof successCallback === 'function') {
                       successCallback(access_token);
@@ -50,23 +62,26 @@
                     faceView.close();
                   }
                 },
+                onExit = function() {
+
+                  if(access_token === null && userDenied === false) {
+                    // InAppBrowser was closed and we don't have an app id
+                    if(typeof finalCallback !== 'undefined' && typeof finalCallback === 'function') {
+                      finalCallback();
+                    }
+
+                  }
+
+                  userDenied = false;
+
+                },
                 userDenied = false;
 
             faceView = window.open(authorize_url, '_blank', 'location=no');
             faceView.addEventListener('loadstart', callback);
-            faceView.addEventListener('exit', function() {
+            faceView.addEventListener('exit', onExit);
 
-              if(access_token === null && userDenied === false) {
-                // InAppBrowser was closed and we don't have an app id
-                if(typeof finalCallback !== 'undefined' && typeof finalCallback === 'function') {
-                  finalCallback();
-                }
 
-              }
-
-              userDenied = false;
-
-            });
 
         }
 
