@@ -35,7 +35,13 @@ That's it, now you are ready to run the app:
 phonegap run ios
 ```
 
-This will launch the app in your iOS Simulator. If you want to launch the app on a device, open the project in Xcode. From the project directory, you can run:
+or
+
+```sh
+phonegap run android
+```
+
+This will launch the app in your iOS or Android Simulator. If you want to launch the app on an iOS device, open the project in Xcode. From the project directory, you can run:
 
 ```sh
 open platforms/ios/TodoLite.xcodeproj/
