@@ -16,6 +16,8 @@ cd todo-lite
 
 Now install the PhoneGap plugins required to make it run. This activates Couchbase Lite, the camera, and the InAppBrowser.
 
+**NOTE:** The contents of `https://github.com/couchbaselabs/Couchbase-Lite-PhoneGap-Plugin.git` are broken right now. They will be fixed in the next couple of days but if you want to follow these instructions today you can [grab a zip of the latest plugin](https://dl.dropboxusercontent.com/u/14074521/LGplugin.zip) and uncompress it and use the `/full/path/to/LGplugin/LGplugin` instead of the git url below. I hope to have this fixed by the end of the week. -- Chris
+
 ```sh
 phonegap local plugin add https://github.com/couchbaselabs/Couchbase-Lite-PhoneGap-Plugin.git
 phonegap local plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin-camera.git
