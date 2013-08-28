@@ -3,7 +3,8 @@
   "facebook": { "register": true },
   "databases": {
     "todos": {
-      "server": "walrus:",
+      "server": "http://localhost:8091/",
+      "bucket" : "todos",
       "users": {
         "GUEST": {"disabled": true}
       },
@@ -21,7 +22,8 @@ function(doc, oldDoc) {
       throw({forbidden : "list must have an owner"})
     }
     if (oldDoc) {
-      requireUser(oldDoc.owner)
+      var oldOwnerName = oldDoc.owner.substring(doc.owner.indexOf(":")+1);
+      requireUser(oldOwnerName)
     }
     var ownerName = doc.owner.substring(doc.owner.indexOf(":")+1);
     access(ownerName, "list-"+doc._id);
