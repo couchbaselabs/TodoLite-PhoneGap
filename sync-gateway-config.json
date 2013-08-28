@@ -30,7 +30,7 @@ function(doc, oldDoc) {
   } else if (doc.type == "profile") {
     channel("profiles");
     var user = doc._id.substring(doc._id.indexOf(":")+1);
-    if (user !== doc.user) {
+    if (user !== doc.user_id) {
       throw({forbidden : "profile user field mismatch from id"})
     }
     requireUser(user);
