@@ -395,10 +395,17 @@ function getFacebookUserInfo(token, cb) {
 }
 
 function getNewFacebookToken(cb) {
-    alert("getNewFacebookToken")
+    console.log("getNewFacebookToken")
     // should be like doFirstLogin() but modify the user and
     // doesn't need to put the owner on all the lists.
-    cb()
+
+    doFacebook(function(err, data){
+        if (err) {return cb(err)}
+        config.setUser(data, function(err, ok){
+            if (err) {return cb(err)}
+            registerFacebookToken(cb)
+        })
+    })
 }
 
 /*
@@ -410,7 +417,7 @@ push and pull
 
 */
 
-function triggerSync(cb) {
+function triggerSync(cb, retryCount) {
     var remote = {
         url : config.site.syncUrl,
         auth : {facebook : {email : config.user.email}}
@@ -424,30 +431,43 @@ function triggerSync(cb) {
         source : remote,
         continuous : true
     },
-    retryCount = 3,
 
     pushSync = syncManager(config.server, push),
     pullSync = syncManager(config.server, pull)
 
     console.log("pushSync", push)
 
-    pushSync.on("auth-challenge", function() {
+    if (typeof retryCount == "undefined") {
+        retryCount = 3
+    }
+
+    var challenged = false;
+    function authChallenge() {
+        if (challenged) {return}
+        challenged = true;
         pushSync.cancel(function(err, ok) {
-            if (err) {return}
-            if (retryCount == 0) {return cb("sync retry limit reached")}
-            retryCount--
-            getNewFacebookToken(function(err, ok) {
-                pushSync.start()
+            pullSync.cancel(function(err, ok) {
+                if (retryCount == 0) {return cb("sync retry limit reached")}
+                retryCount--
+                getNewFacebookToken(function(err, ok) {
+                    triggerSync(cb, retryCount)
+                })
             })
-       })
-    })
+        })
+    }
+
+    pushSync.on("auth-challenge", authChallenge)
+    pullSync.on("auth-challenge", authChallenge)
+
     pushSync.on("error", function(err){
+        if (challenged) {return}
         cb(err)
     })
     pushSync.on("connected", function(){
         pullSync.start()
     })
     pullSync.on("error", function(err){
+        if (challenged) {return}
         cb(err)
     })
     pullSync.on("connected", function(){
@@ -496,16 +516,28 @@ function setupConfig(done) {
                         user : user,
                         setUser : function(newUser, cb) {
                             if (window.config.user) {
-                                return cb("user already set")
+                                if (config.user.user_id !== newUser.email) {
+                                    return cb("already logged in as "+config.user.user_id)
+                                } else {
+                                    // we got a new facebook token
+                                    config.user.access_token = newUser.access_token
+                                    db.put("_local/user", config.user, function(err, ok){
+                                        if (err) {return cb(err)}
+                                        console.log("updateUser ok")
+                                        config.user._rev = ok.rev
+                                        cb()
+                                    })
+                                }
+                            } else {
+                                newUser.user_id = newUser.email
+                                console.log("setUser "+JSON.stringify(newUser))
+                                db.put("_local/user", newUser, function(err, ok){
+                                    if (err) {return cb(err)}
+                                    console.log("setUser ok")
+                                    window.config.user = newUser
+                                    cb()
+                                })
                             }
-                            newUser.user_id = newUser.email
-                            console.log("setUser "+JSON.stringify(newUser))
-                            db.put("_local/user", newUser, function(err, ok){
-                                if (err) {return cb(err)}
-                                console.log("setUser ok")
-                                window.config.user = newUser
-                                cb()
-                            })
                         },
                         db : db,
                         info : info,
@@ -673,7 +705,7 @@ function syncManager(serverUrl, syncDefinition) {
 
             }
         }
-        console.log("start sync", syncDefinition)
+        console.log("start sync"+ JSON.stringify(syncDefinition))
         coax.post([serverUrl, "_replicate"], syncDefinition, callBack)
     }
 
@@ -684,11 +716,15 @@ function syncManager(serverUrl, syncDefinition) {
             if (task.error && task.error[0] == 401) {
                 cb(true)
                 callHandlers("auth-challenge", {status : 401, error : task.error[1]})
+            } else if (task.error && task.error[0] == 502) {
+                cb(true)
+                callHandlers("auth-challenge", {status : 502, error : task.error[1]})
             } else if (task.status == "Idle" || task.status == "Stopped" || (/Processed/.test(task.status) && !/Processed 0/.test(task.status))) {
                 cb(true)
                 callHandlers("connected", task)
             } else if (/Processed 0 \/ 0 changes/.test(task.status)) {
-                cb(true) // I think we only get this if we are connected
+                // cb(false) // keep polling? (or does this mean we are connected?)
+                cb(true)
                 callHandlers("connected", task)
             } else {
                 cb(false) // not done

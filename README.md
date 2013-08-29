@@ -21,7 +21,7 @@ Now install the PhoneGap plugins required to make it run. This activates Couchba
 ```sh
 phonegap local plugin add https://github.com/couchbaselabs/Couchbase-Lite-PhoneGap-Plugin.git
 phonegap local plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin-camera.git
-phonegap local plugin add org.apache.cordova.core.inappbrowser
+phonegap local plugin add https://github.com/apache/cordova-plugin-inappbrowser.git
 ```
 
 Now replace the generated application with the Todo Lite source code.

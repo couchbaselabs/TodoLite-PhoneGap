@@ -22,7 +22,7 @@ function(doc, oldDoc) {
       throw({forbidden : "list must have an owner"})
     }
     if (oldDoc) {
-      var oldOwnerName = oldDoc.owner.substring(doc.owner.indexOf(":")+1);
+      var oldOwnerName = oldDoc.owner.substring(oldDoc.owner.indexOf(":")+1);
       requireUser(oldOwnerName)
     }
     var ownerName = doc.owner.substring(doc.owner.indexOf(":")+1);
