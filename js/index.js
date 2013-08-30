@@ -537,8 +537,8 @@ function setupConfig(done) {
                     if (err) {return done(err)}
                     window.config = {
                         site : {
-                            // syncUrl : "http://sync.couchbasecloud.com:4984/todos3"
-                            syncUrl : "http://10.0.1.12:4984/todos/"
+                            syncUrl : "http://sync.couchbasecloud.com:4984/todos4"
+                            // syncUrl : "http://10.0.1.12:4984/todos/"
                         },
                         user : user,
                         setUser : function(newUser, cb) {
