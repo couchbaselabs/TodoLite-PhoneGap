@@ -57,6 +57,18 @@ function appReady() {
 }
 
 /*
+Error handling UI
+*/
+
+function loginErr(err) {
+    if (err.reason) {
+        alert("Can't login: "+err.reason);
+    } else {
+        alert("Login error: "+JSON.stringify(err))
+    }
+}
+
+/*
 The index UI lists the available todo lists and lets you create new ones.
 */
 
@@ -70,6 +82,9 @@ function goIndex() {
     if (!config.user) {
         $(".todo-login").show().click(function(){
             doFirstLogin(function(err) {
+                if (err) {
+                    return loginErr(err)
+                }
                 goIndex()
             })
         })
@@ -238,6 +253,9 @@ The sharing and login management stuff
 function doShare(id) {
     if (!config.user) {
         doFirstLogin(function(err) {
+            if (err) {
+                return loginErr(err)
+            }
             console.log("login done", err, config.user)
             goShare(id)
         })
@@ -370,6 +388,13 @@ Get user email address from Facebook, and access code to verify on Sync Gateway
 
 
 function doFacebook(cb) {
+    if (navigator && navigator.connection) {
+        console.log("connection "+navigator.connection.type)
+        if (navigator.connection.type == "none") {
+            return cb({reason : "No network connection"})
+        }
+    }
+
     // TODO should pull from config?
     FacebookInAppBrowser.settings.appId = "501518809925546"
     FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
@@ -450,6 +475,9 @@ function triggerSync(cb, retryCount) {
                 if (retryCount == 0) {return cb("sync retry limit reached")}
                 retryCount--
                 getNewFacebookToken(function(err, ok) {
+                    if (err) {
+                        return loginErr(err)
+                    }
                     triggerSync(cb, retryCount)
                 })
             })
