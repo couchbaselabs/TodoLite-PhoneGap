@@ -234,13 +234,13 @@ function goImage(id) {
         doc.image_path = config.db([id,"image.jpg"]).pax.toString()
         drawContent(config.t.image(doc))
         $("#content .todo-image-back").click(function(){
-            goList(doc.listId)
+            goList(doc.list_id)
         })
         $("#content .todo-image-del").click(function(){
             delete doc.image_path
             delete doc._attachments["image.jpg"]
             config.db.post(doc, function(err, ok) {
-                goList(doc.listId)
+                goList(doc.list_id)
             })
         })
     })
