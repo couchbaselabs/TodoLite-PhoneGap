@@ -9,7 +9,7 @@
           permissions: ''
         }
 
-        , login: function(successCallback, finalCallback) {
+        , login: function(successCallback) {
 
             if(this.settings.appId === '' || this.settings.redirectUrl === '') {
               console.log('[FacebookInAppBrowser] You need to set up your app id and redirect url.');
@@ -27,7 +27,7 @@
                   authorize_url += "&scope=" + this.settings.permissions;
                 }
 
-            var faceView, access_token = null, redirectUrl = this.settings.redirectUrl;
+            var faceView, workaround = false, access_token = null, redirectUrl = this.settings.redirectUrl;
                 callback = function(location) {
                   console.log("[FacebookInAppBrowser] Event 'loadstart': " + JSON.stringify(location));
 
@@ -36,6 +36,7 @@
                     var newLoc = location.url.replace("https://m./", "https://m.facebook.com/")
                     console.log("[FacebookInAppBrowser] workaround goto "+newLoc)
                     // faceView.executeScript({code : 'window.location = "'+newLoc+'"'})
+                    workaround = true;
                     faceView.close()
                     faceView = window.open(newLoc, '_blank', 'location=no');
                     faceView.addEventListener('loadstart', callback);
@@ -48,27 +49,25 @@
                     console.log("[FacebookInAppBrowser] Logged in. Token: " + access_token);
                     faceView.close();
 
-
-                    if(typeof successCallback !== 'undefined' && typeof successCallback === 'function') {
-                      successCallback(access_token);
-                    }
-
+                    successCallback(false, access_token);
                   }
 
                   if (location.url.indexOf("error_reason=user_denied") !== -1) {
                     // User denied
                     userDenied = true;
                     console.log('[FacebookInAppBrowser] User denied Facebook Login.');
+                    successCallback({reason : "User denied Facebook Login."});
                     faceView.close();
                   }
                 },
                 onExit = function() {
-
+                  if (workaround) {
+                    workaround = false
+                    return;
+                  }
                   if(access_token === null && userDenied === false) {
                     // InAppBrowser was closed and we don't have an app id
-                    if(typeof finalCallback !== 'undefined' && typeof finalCallback === 'function') {
-                      finalCallback();
-                    }
+                    successCallback({reason : "Not logged into Facebook."});
 
                   }
 

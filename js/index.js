@@ -399,14 +399,13 @@ function doFacebook(cb) {
     FacebookInAppBrowser.settings.appId = "501518809925546"
     FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
     FacebookInAppBrowser.settings.permissions = 'email'
-    FacebookInAppBrowser.login(function(accessToken){
+    FacebookInAppBrowser.login(function(err, accessToken){
+        if (err) {return cb(err)}
         getFacebookUserInfo(accessToken, function(err, data) {
             if (err) {return cb(err)}
             console.log("got facebook user info", data)
             cb(false, data)
         })
-    }, function(err) { // only called if we don't get an access token
-        cb(err)
     })
 }
 
