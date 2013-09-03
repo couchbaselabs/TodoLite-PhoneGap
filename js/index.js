@@ -24,36 +24,37 @@ var coax = require("coax"),
 
 new fastclick.FastClick(document.body)
 
-document.addEventListener("deviceready", appInit, false)
+document.addEventListener("deviceready", onDeviceReady, false)
 
 /*
 Initialize the app, connect to the database, draw the initial UI
 */
 
-function appInit() {
+// run on device ready, call setupConfig kick off application logic
+// with appReady.
+
+function onDeviceReady() {
     setupConfig(function(){
-        appReady()
+        connectToChanges()
+        goIndex()
+        triggerSync(function(err) {
+            if (err) {alert("error on sync"+ JSON.stringify(err))}
+        })
     })
 };
 
+// function placeholder replaced by whatever should be running when the
+// change comes in. Used to trigger display updates.
 window.dbChanged = function(){}
 
-function appReady() {
-    var lastSeq;
-    config.db.changes({since : config.info.update_seq}, function(_, ch){
-        if (ch.seq == lastSeq) {return}
-        lastSeq = ch.seq
-        console.log("change", ch)
-        window.dbChanged()
-    })
-    goIndex()
-    if (config.user) {
-        triggerSync(function(err) {
-            if (err) {
-                console.log("error on sync", err)
-            }
-        })
-    }
+// call window.dbChanged each time the database changes. Use it to
+// update the display when local or remote updates happen.
+function connectToChanges() {
+  config.db.changes({since : config.info.update_seq}, function(err, change){
+      lastSeq = change.seq
+      log("change", err, change)
+      window.dbChanged()
+  })
 }
 
 /*
@@ -79,36 +80,37 @@ function drawContent(html) {
 
 function goIndex() {
     drawContent(config.t.index())
-    if (!config.user) {
-        $(".todo-login").show().click(function(){
-            doFirstLogin(function(err) {
-                if (err) {
-                    return loginErr(err)
-                }
-                goIndex()
-            })
-        })
-    }
     $("#content form").submit(function(e) {
         e.preventDefault()
         var doc = jsonform(this)
         doc.type = "list"
         doc.created_at = new Date()
         if (config.user && config.user.email) {
+            // the the device owner owns lists they create
             doc.owner = "p:"+config.user.user_id
         }
-        console.log(doc)
         config.db.post(doc, function(err, ok) {
             $("#content form input").val("")
         })
     })
+    // If you click a list,
     $("#scrollable").on("click", "li", function() {
         var id = $(this).attr("data-id");
         goList(id)
     })
+    // offer the sign in screen to logged out users
+    if (!config.user) {
+        $(".todo-login").show().click(function(){
+            doFirstLogin(function(err) {
+                if (err) {return loginErr(err)}
+                goIndex()
+            })
+        })
+    }
+    // when the database changes, update the UI to reflect new lists
     window.dbChanged = function() {
         config.views(["lists", {descending : true}], function(err, view) {
-            console.log("lists", view)
+            log("lists", view)
             $("#scrollable").html(config.t.indexList(view))
             $("#scrollable li").on("swipeRight", function() {
                 var id = $(this).attr("data-id")
@@ -169,7 +171,7 @@ function goList(id) {
                 endkey : [id],
                 descending : true
             }], function(err, view) {
-                console.log("tasks", view)
+                log("tasks", view)
                 $("#scrollable").html(config.t.listItems(view))
                 $("#scrollable li").on("swipeRight", function() {
                     var id = $(this).attr("data-id")
@@ -184,7 +186,7 @@ function goList(id) {
 }
 
 function deleteItem(id) {
-    console.log("delete", id)
+    log("delete", id)
     config.db.get(id, function(err, doc){
         doc._deleted = true;
         config.db.put(id, doc, function(){})
@@ -192,7 +194,7 @@ function deleteItem(id) {
 }
 
 function toggleChecked(id) {
-    console.log("toggle", id)
+    log("toggle", id)
     config.db.get(id, function(err, doc){
         doc.checked = !doc.checked
         doc.updated_at = new Date()
@@ -201,7 +203,7 @@ function toggleChecked(id) {
 }
 
 function doCamera(id) {
-    console.log("camera", id)
+    log("camera", id)
     if (!(navigator.camera && navigator.camera.getPicture)) {return}
 
     navigator.camera.getPicture(function(imageData) {
@@ -215,7 +217,6 @@ function doCamera(id) {
             config.db.post(doc, function(err, ok) {})
         })
     }, function(message) { // onFail
-        // alert('Failed because: ' + message);
     }, {
         quality: 50,
         targetWidth : 1000,
@@ -256,7 +257,7 @@ function doShare(id) {
             if (err) {
                 return loginErr(err)
             }
-            console.log("login done", err, config.user)
+            log("login done", err, config.user)
             goShare(id)
         })
     } else {
@@ -277,7 +278,7 @@ function goShare(id) {
                 var row = view.rows[i]
                 for (var j = members.length - 1; j >= 0; j--) {
                     var member = members[j]
-                    console.log("row", row.id, member)
+                    log("row", row.id, member)
                     if (row.id == member) {
                         row.checked = "checked"
                     }
@@ -312,7 +313,7 @@ function toggleShare(doc, user, cb) {
     } else {
         doc.members.splice(i,1)
     }
-    console.log("members", doc.members)
+    log("members", doc.members)
     config.db.post(doc, cb)
 }
 
@@ -326,18 +327,18 @@ function doFirstLogin(cb) {
         config.setUser(data, function(err, ok){
             if (err) {return cb(err)}
             registerFacebookToken(function(err,ok){
-                console.log("registerFacebookToken done "+JSON.stringify(err))
+                log("registerFacebookToken done "+JSON.stringify(err))
                 if (err) {
-                    console.log("registerFacebookToken err "+JSON.stringify([err, ok]))
+                    log("registerFacebookToken err "+JSON.stringify([err, ok]))
                     return cb(err)
                 }
                 createMyProfile(function(err){
-                    console.log("createMyProfile done "+JSON.stringify(err))
+                    log("createMyProfile done "+JSON.stringify(err))
                     addMyUsernameToAllLists(function(err) {
-                        console.log("addMyUsernameToAllLists done "+JSON.stringify(err))
+                        log("addMyUsernameToAllLists done "+JSON.stringify(err))
                         if (err) {return cb(err)}
                         triggerSync(function(err, ok){
-                            console.log("triggerSync done "+JSON.stringify(err))
+                            log("triggerSync done "+JSON.stringify(err))
                             cb(err, ok)
                         })
                     })
@@ -353,7 +354,7 @@ function registerFacebookToken(cb) {
         email : config.user.email,
         access_token : config.user.access_token
     }
-    console.log("registerFacebookToken POST "+JSON.stringify(registerData))
+    log("registerFacebookToken POST "+JSON.stringify(registerData))
     coax.post([config.server, "_facebook_token"], registerData, cb)
 }
 
@@ -366,19 +367,19 @@ function addMyUsernameToAllLists(cb) {
             docs.push(row.doc)
         })
         config.db.post("_bulk_docs", {docs:docs}, function(err, ok) {
-            console.log("updated all docs", err, ok)
+            log("updated all docs", err, ok)
             cb(err, ok)
         })
     })
 }
 
 function createMyProfile(cb) {
-    console.log("createMyProfile user "+JSON.stringify(config.user))
+    log("createMyProfile user "+JSON.stringify(config.user))
     var profileData = JSON.parse(JSON.stringify(config.user))
     profileData.type = "profile"
     profileData.user_id = profileData.email
     delete profileData.email
-    console.log("createMyProfile put "+JSON.stringify(profileData))
+    log("createMyProfile put "+JSON.stringify(profileData))
     config.db.put("p:"+profileData.user_id, profileData, cb)
 }
 
@@ -389,7 +390,7 @@ Get user email address from Facebook, and access code to verify on Sync Gateway
 
 function doFacebook(cb) {
     if (navigator && navigator.connection) {
-        console.log("connection "+navigator.connection.type)
+        log("connection "+navigator.connection.type)
         if (navigator.connection.type == "none") {
             return cb({reason : "No network connection"})
         }
@@ -403,7 +404,7 @@ function doFacebook(cb) {
         if (err) {return cb(err)}
         getFacebookUserInfo(accessToken, function(err, data) {
             if (err) {return cb(err)}
-            console.log("got facebook user info", data)
+            log("got facebook user info", data)
             cb(false, data)
         })
     })
@@ -419,7 +420,7 @@ function getFacebookUserInfo(token, cb) {
 }
 
 function getNewFacebookToken(cb) {
-    console.log("getNewFacebookToken")
+    log("getNewFacebookToken")
     // should be like doFirstLogin() but modify the user and
     // doesn't need to put the owner on all the lists.
 
@@ -442,9 +443,12 @@ push and pull
 */
 
 function triggerSync(cb, retryCount) {
+    if (!config.user) {
+        return log("no user")
+    }
     var remote = {
         url : config.site.syncUrl,
-        auth : {facebook : {email : config.user.email}}
+        auth : {facebook : {email : config.user.email}} // why is this email?
     },
     push = {
         source : appDbName,
@@ -459,7 +463,7 @@ function triggerSync(cb, retryCount) {
     pushSync = syncManager(config.server, push),
     pullSync = syncManager(config.server, pull)
 
-    console.log("pushSync", push)
+    log("pushSync", push)
 
     if (typeof retryCount == "undefined") {
         retryCount = 3
@@ -537,8 +541,8 @@ function setupConfig(done) {
                     if (err) {return done(err)}
                     window.config = {
                         site : {
-                            syncUrl : "http://sync.couchbasecloud.com:4984/todos4"
-                            // syncUrl : "http://10.0.1.12:4984/todos/"
+                            // syncUrl : "http://sync.couchbasecloud.com:4984/todos4"
+                            syncUrl : "http://10.0.1.12:4984/todos/"
                         },
                         user : user,
                         setUser : function(newUser, cb) {
@@ -550,17 +554,17 @@ function setupConfig(done) {
                                     config.user.access_token = newUser.access_token
                                     db.put("_local/user", config.user, function(err, ok){
                                         if (err) {return cb(err)}
-                                        console.log("updateUser ok")
+                                        log("updateUser ok")
                                         config.user._rev = ok.rev
                                         cb()
                                     })
                                 }
                             } else {
                                 newUser.user_id = newUser.email
-                                console.log("setUser "+JSON.stringify(newUser))
+                                log("setUser "+JSON.stringify(newUser))
                                 db.put("_local/user", newUser, function(err, ok){
                                     if (err) {return cb(err)}
-                                    console.log("setUser ok")
+                                    log("setUser ok")
                                     window.config.user = newUser
                                     cb()
                                 })
@@ -583,13 +587,15 @@ function setupConfig(done) {
     })
 
     function setupDb(db, cb) {
-        db.put(function(){
-            db.get(cb)
-        })
+        // db.del(function(){
+            db.put(function(){
+                db.get(cb)
+            })
+        // })
     }
 
     function setupViews(db, cb) {
-        var design = "_design/todo8"
+        var design = "_design/todo9"
         db.put(design, {
             views : {
                 lists : {
@@ -601,8 +607,8 @@ function setupConfig(done) {
                 },
                 tasks : {
                     map : function(doc) {
-                        if (doc.type == "task" && doc.updated_at && doc.title && doc.list_id) {
-                            emit([doc.list_id, !doc.checked, doc.updated_at],
+                        if (doc.type == "task" && doc.created_at && doc.title && doc.list_id) {
+                            emit([doc.list_id, doc.created_at],
                                 {
                                     checked : doc.checked ? "checked" : "",
                                     title : doc.title,
@@ -635,8 +641,15 @@ function setupConfig(done) {
     };
 }
 
+/* END APP */
+
 /*
-Helpers that aren't in a node module and thus aren't in the `modules.js` file
+* Helpers that aren't in a node module and thus aren't in the `modules.js` file
+*
+*
+*
+*
+*
 */
 
 function jsonform(elem) {
@@ -707,7 +720,7 @@ function syncManager(serverUrl, syncDefinition) {
             // we could use _active_tasks?feed=continuous for this
             // but we don't need that code for this app...
             callBack = function(err, info) {
-                console.log("continuous sync callBack", err, info, syncDefinition)
+                log("continuous sync callBack", err, info, syncDefinition)
                 if (err) {
                     callHandlers("error", err)
                 } else {
@@ -717,7 +730,7 @@ function syncManager(serverUrl, syncDefinition) {
             }
         } else { // non-continuous
             callBack = function(err, info) {
-                console.log("sync callBack", err, info, syncDefinition)
+                log("sync callBack", err, info, syncDefinition)
                 if (err) {
                     if (info.status == 401) {
                         err.status = info.status;
@@ -732,13 +745,13 @@ function syncManager(serverUrl, syncDefinition) {
 
             }
         }
-        console.log("start sync"+ JSON.stringify(syncDefinition))
+        log("start sync"+ JSON.stringify(syncDefinition))
         coax.post([serverUrl, "_replicate"], syncDefinition, callBack)
     }
 
     function processTaskInfo(id, cb) {
         taskInfo(id, function(err, task) {
-            console.log("task", task)
+            log("task", task)
             publicAPI.task = task
             if (task.error && task.error[0] == 401) {
                 cb(true)
@@ -780,4 +793,10 @@ function syncManager(serverUrl, syncDefinition) {
         }
     }
     return publicAPI;
+}
+
+
+// pluggable logger
+function log() {
+    console.log.apply(console, arguments)
 }

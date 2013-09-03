@@ -4,7 +4,7 @@
   "databases": {
     "todos": {
       "server": "http://localhost:8091/",
-      "bucket" : "todos",
+      "bucket" : "todos2",
       "users": {
         "GUEST": {"disabled": true}
       },

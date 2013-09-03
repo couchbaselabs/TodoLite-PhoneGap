@@ -17,6 +17,10 @@
  * under the License.
  */
 
+body {
+	/*font-size:200%;*/
+}
+
 header {
   position: fixed;
   top: 0;

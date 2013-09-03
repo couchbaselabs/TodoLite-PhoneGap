@@ -216,7 +216,7 @@ module.exports = function(request) {
         cb = args[1],
         newPax = args[2];
       if (cb) {
-        // console.log(["hoax", verb||"get", reqOpts]);
+        console.log(["hoax"+ (verb||"get"), reqOpts]);
         if (verb) {
           return request[verb](reqOpts, makeHoaxCallback(cb, verb));
         } else {
@@ -479,19 +479,21 @@ request.DEFAULT_TIMEOUT = DEFAULT_TIMEOUT;
 // HTTP method shortcuts
 //
 
-var shortcuts = [ 'get', 'put', 'post', 'head' ];
+var shortcuts = [ 'get', 'put', 'post', 'del', 'head' ];
 shortcuts.forEach(function(shortcut) {
   var method = shortcut.toUpperCase();
   var func   = shortcut.toLowerCase();
 
   request[func] = function(opts) {
-    if(typeof opts === 'string')
+    if(typeof opts === 'string') {
       opts = {'method':method, 'uri':opts};
-    else {
+    } else {
       opts = JSON.parse(JSON.stringify(opts));
       opts.method = method;
     }
-
+    if (func == "del") {
+      opts.method = "DELETE";
+    }
     var args = [opts].concat(Array.prototype.slice.apply(arguments, [1]));
     return request.apply(this, args);
   }
