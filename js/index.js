@@ -26,6 +26,9 @@ new fastclick.FastClick(document.body)
 
 document.addEventListener("deviceready", onDeviceReady, false)
 
+// var REMOTE_SYNC_URL = "http://10.0.1.12:4984/todos/"
+var REMOTE_SYNC_URL = "http://sync.couchbasecloud.com:4984/todos4"
+
 /*
 Initialize the app, connect to the database, draw the initial UI
 */
@@ -38,7 +41,7 @@ function onDeviceReady() {
         connectToChanges()
         goIndex()
         triggerSync(function(err) {
-            if (err) {alert("error on sync"+ JSON.stringify(err))}
+            if (err) {console.log("error on sync"+ JSON.stringify(err))}
         })
     })
 };
@@ -541,8 +544,7 @@ function setupConfig(done) {
                     if (err) {return done(err)}
                     window.config = {
                         site : {
-                            // syncUrl : "http://sync.couchbasecloud.com:4984/todos4"
-                            syncUrl : "http://10.0.1.12:4984/todos/"
+                            syncUrl : REMOTE_SYNC_URL
                         },
                         user : user,
                         setUser : function(newUser, cb) {
@@ -571,6 +573,7 @@ function setupConfig(done) {
                             }
                         },
                         db : db,
+                        s : coax(url),
                         info : info,
                         views : views,
                         server : url,
@@ -747,11 +750,14 @@ function syncManager(serverUrl, syncDefinition) {
         }
         log("start sync"+ JSON.stringify(syncDefinition))
         coax.post([serverUrl, "_replicate"], syncDefinition, callBack)
+        // coax.post([serverUrl, "_replicator"], syncDefinition, callBack)
     }
 
     function processTaskInfo(id, cb) {
         taskInfo(id, function(err, task) {
+            if (err) {return cb(err)}
             log("task", task)
+
             publicAPI.task = task
             if (task.error && task.error[0] == 401) {
                 cb(true)
