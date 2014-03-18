@@ -37,7 +37,11 @@ Initialize the app, connect to the database, draw the initial UI
 // with appReady.
 
 function onDeviceReady() {
-    setupConfig(function(){
+    setupConfig(function(err){
+        if (err) {
+            alert(err)
+            return console.log("err "+JSON.stringify(err))
+        }
         connectToChanges()
         goIndex()
         triggerSync(function(err) {
