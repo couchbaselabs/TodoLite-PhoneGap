@@ -538,7 +538,7 @@ function setupConfig(done) {
     });
 
     cblite.getURL(function(err, url) {
-        console.log("getURL", err, url)
+        console.log("getURL: " + JSON.stringify([err, url]))
         if (err) {return done(err)}
         window.server = coax(url);
         var db = coax([url, appDbName]);
