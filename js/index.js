@@ -540,6 +540,12 @@ function setupConfig(done) {
     cblite.getURL(function(err, url) {
         console.log("getURL: " + JSON.stringify([err, url]))
         if (err) {return done(err)}
+
+        var xmlHttp = new XMLHttpRequest()
+        xmlHttp.open( 'GET', url, false )
+        xmlHttp.send( null )
+        console.log( 'XMLHttpRequest get: ' +  xmlHttp.responseText )
+
         window.server = coax(url);
         var db = coax([url, appDbName]);
         setupDb(db, function(err, info){
