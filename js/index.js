@@ -596,12 +596,12 @@ function setupConfig(done) {
     })
 
     function setupDb(db, cb) {
-        // db.del(function(){
+        db.get(function(err, res, body){
+            console.log(JSON.stringify(["before create db put", err, res, body]))
             db.put(function(err, res, body){
-                console.log(JSON.stringify(["did create db put", err, res, body]))
                 db.get(cb)
             })
-        // })
+        })
     }
 
     function setupViews(db, cb) {
