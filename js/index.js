@@ -597,7 +597,8 @@ function setupConfig(done) {
 
     function setupDb(db, cb) {
         // db.del(function(){
-            db.put(function(){
+            db.put(function(err, res, body){
+                console.log(JSON.stringify(["did create db put", err, res, body]))
                 db.get(cb)
             })
         // })
