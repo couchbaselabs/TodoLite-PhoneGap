@@ -143,6 +143,7 @@
         , logout: function(access_token, afterCallback) {
 
             var logout_url = encodeURI("https://www.facebook.com/logout.php?next="  + this.settings.redirectUrl + "&access_token=" + access_token);
+            var obj = this;
 
             var face = window.open(logout_url, '_blank', 'hidden=yes,location=no'),
                 callback = function(location) {
@@ -152,7 +153,7 @@
 
                       // Do nothing
 
-                   } else if(location.url ===  this.settings.redirectUrl + '#_=_' || location.url === this.settings.redirectUrl) {
+                   } else if(location.url ===  obj.settings.redirectUrl + '#_=_' || location.url === obj.settings.redirectUrl) {
 
                       face.close();
 
