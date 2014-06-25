@@ -122,20 +122,20 @@ function goIndex() {
             })
         })
     } else {
-		$( ".todo-login" ).show().click( function() {
-			doFacebookLogout( config.user.access_token, function(error, data) {
-				if (error) { return logoutError( error ) }
-				// Logout Success
-				alert( "You are now logged out!" )
-				$( ".todo-login" ).off( "click" )
-				$( ".todo-login" ).show().click( function() {
-		            doFirstLogin( function( error ) {
-		                if (error) { return logoutError( error ) }
-		                goIndex()
-		            } )
-		        } )
-			} )
-		} )
+        $( ".todo-login" ).show().click( function() {
+            doFacebookLogout( config.user.access_token, function(error, data) {
+                if (error) { return logoutError( error ) }
+                // Logout Success
+                alert( "You are now logged out!" )
+                $( ".todo-login" ).off( "click" )
+                $( ".todo-login" ).show().click( function() {
+                    doFirstLogin( function( error ) {
+                        if (error) { return logoutError( error ) }
+                        goIndex()
+                    } )
+                } )
+            } )
+        } )
     }
     // when the database changes, update the UI to reflect new lists
     window.dbChanged = function() {
@@ -441,21 +441,21 @@ function doFacebook(cb) {
 }
 
 function doFacebookLogout(token, cb) {
-	if (navigator && navigator.connection) {
-		log( "connection " + navigator.connection.type )
-		if (navigator.connection.type == "none") { return cb( {
-			reason : "No network connection"
-		} ) }
-	}
-	FacebookInAppBrowser.settings.appId = "501518809925546"
-	FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
-	FacebookInAppBrowser.settings.permissions = 'email'
-	FacebookInAppBrowser.logout( token, function(err, data) {
-		if (err) { return cb( err ) }
-		log( "Logged out of facebook" );
-		config.user = null;
-		cb( false, data );
-	} )
+    if (navigator && navigator.connection) {
+        log( "connection " + navigator.connection.type )
+        if (navigator.connection.type == "none") { return cb( {
+            reason : "No network connection"
+        } ) }
+    }
+    FacebookInAppBrowser.settings.appId = "501518809925546"
+    FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
+    FacebookInAppBrowser.settings.permissions = 'email'
+    FacebookInAppBrowser.logout( token, function(err, data) {
+        if (err) { return cb( err ) }
+        log( "Logged out of facebook" );
+        config.user = null;
+        cb( false, data );
+    } )
 }
 
 function getFacebookUserInfo(token, cb) {
