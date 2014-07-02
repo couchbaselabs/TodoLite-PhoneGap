@@ -127,10 +127,10 @@ function goIndex() {
                 if (error) { return logoutError( error ) }
                 // Logout Success
                 alert( "You are now logged out!" )
-                $( ".todo-login" ).off( "click" )
+                $( ".todo-login" ).off( "click" );
                 $( ".todo-login" ).show().click( function() {
                     doFirstLogin( function( error ) {
-                        if (error) { return logoutError( error ) }
+                        if (error) { return loginErr( error ) }
                         goIndex()
                     } )
                 } )
@@ -412,8 +412,13 @@ function createMyProfile(cb) {
     log("createMyProfile put "+JSON.stringify(profileData))
     //Check if Profile Document Exists
     config.db.get( "p:"+profileData.user_id, function( error, doc ){
-    	profileData = doc;
-        config.db.put("p:"+profileData.user_id, profileData, cb)
+    	if ( error ) {
+    		// doc does not exists
+    		config.db.put("p:"+profileData.user_id, profileData, cb)
+    	} else {
+    		profileData = doc;
+    		config.db.put("p:"+profileData.user_id, profileData, cb)
+    	}
     })
 }
 
