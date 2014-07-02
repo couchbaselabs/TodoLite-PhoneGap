@@ -413,6 +413,17 @@ function createMyProfile(cb) {
     config.db.put("p:"+profileData.user_id, profileData, cb)
 }
 
+function destroyMyProfile(cb) {
+    log("destroyMyProfile user "+JSON.stringify(config.user))
+    var profileData = JSON.parse(JSON.stringify(config.user))
+    profileData.type = "profile"
+    profileData.user_id = profileData.email
+    delete profileData.email
+    deleteItem( "p:" + profileData.user_id )
+    //log("destroyMyProfile delete "+JSON.stringify(profileData))
+    //config.db.delete("p:"+profileData.user_id, profileData, cb)
+}
+
 /*
 Get user email address from Facebook, and access code to verify on Sync Gateway
 */
@@ -450,11 +461,17 @@ function doFacebookLogout(token, cb) {
     FacebookInAppBrowser.settings.appId = "501518809925546"
     FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
     FacebookInAppBrowser.settings.permissions = 'email'
-    FacebookInAppBrowser.logout( token, function(err, data) {
-        if (err) { return cb( err ) }
+    FacebookInAppBrowser.logout( token, function( error, data ) {
+        if (error) { return cb( error ) }
         log( "Logged out of facebook" );
-        config.user = null;
-        cb( false, data );
+        destroyMyProfile( function( error ) {
+            log( "destroyMyProfile done " + JSON.stringify( error ) )
+            config.setUser(null, function( error , ok ) {
+            	if (error) { return cb( error ) }
+            	config.user = null;
+                cb( error , data );
+            } )
+        } )
     } )
 }
 
