@@ -413,17 +413,6 @@ function createMyProfile(cb) {
     config.db.put("p:"+profileData.user_id, profileData, cb)
 }
 
-function destroyMyProfile(cb) {
-    log("destroyMyProfile user "+JSON.stringify(config.user))
-    var profileData = JSON.parse(JSON.stringify(config.user))
-    profileData.type = "profile"
-    profileData.user_id = profileData.email
-    delete profileData.email
-    deleteItem( "p:" + profileData.user_id )
-    //log("destroyMyProfile delete "+JSON.stringify(profileData))
-    //config.db.delete("p:"+profileData.user_id, profileData, cb)
-}
-
 /*
 Get user email address from Facebook, and access code to verify on Sync Gateway
 */
@@ -464,13 +453,10 @@ function doFacebookLogout(token, cb) {
     FacebookInAppBrowser.logout( token, function( error, data ) {
         if (error) { return cb( error ) }
         log( "Logged out of facebook" );
-        destroyMyProfile( function( error ) {
-            log( "destroyMyProfile done " + JSON.stringify( error ) )
-            config.setUser( data, function( error , ok ) {
-            	if (error) { return cb( error ) }
-            	config.user = null;
-                cb( error , data );
-            } )
+        config.setUser( null, function( error , ok ) {
+        	if (error) { return cb( error ) }
+        	config.user = null;
+            cb( error , data );
         } )
     } )
 }
