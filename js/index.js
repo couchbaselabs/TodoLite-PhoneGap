@@ -410,7 +410,11 @@ function createMyProfile(cb) {
     profileData.user_id = profileData.email
     delete profileData.email
     log("createMyProfile put "+JSON.stringify(profileData))
-    config.db.put("p:"+profileData.user_id, profileData, cb)
+    //Check if Profile Document Exists
+    config.db.get( "p:"+profileData.user_id, function( error, doc ){
+    	profileData = doc;
+        config.db.put("p:"+profileData.user_id, profileData, cb)
+    })
 }
 
 /*
@@ -627,16 +631,15 @@ function setupConfig(done) {
 	                                    })
 	                                }
 	                            } else {
-	                            	
-		                                newUser.user_id = newUser.email
-		                                log("setUser "+JSON.stringify(newUser))
-		                                db.put("_local/user", newUser, function(err, ok){
-		                                    if (err) {return cb(err)}
-		                                    log("setUser ok")
-		                                    window.config.user = newUser
-		                                    cb()
-		                                })
-	                            	}
+	                                newUser.user_id = newUser.email
+	                                log("setUser "+JSON.stringify(newUser))
+	                                db.put("_local/user", newUser, function(err, ok){
+	                                    if (err) {return cb(err)}
+	                                    log("setUser ok")
+	                                    window.config.user = newUser
+	                                    cb()
+	                                })
+                            	}
                             }
                         },
                         db : db,
