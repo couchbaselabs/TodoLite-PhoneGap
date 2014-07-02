@@ -130,7 +130,8 @@ function goIndex() {
                 $( ".todo-login" ).off( "click" );
                 $( ".todo-login" ).show().click( function() {
                     doFirstLogin( function( error ) {
-                        if (error) { return loginErr( error ) }
+                    	// If Previously Logged in triggerSync Will Through Timeout Error
+                        if (error && error != "timeout") { return loginErr( error ) }
                         goIndex()
                     } )
                 } )
