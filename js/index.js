@@ -466,7 +466,7 @@ function doFacebookLogout(token, cb) {
         log( "Logged out of facebook" );
         destroyMyProfile( function( error ) {
             log( "destroyMyProfile done " + JSON.stringify( error ) )
-            config.setUser(null, function( error , ok ) {
+            config.setUser( data, function( error , ok ) {
             	if (error) { return cb( error ) }
             	config.user = null;
                 cb( error , data );
