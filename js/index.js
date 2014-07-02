@@ -604,28 +604,39 @@ function setupConfig(done) {
                         },
                         user : user,
                         setUser : function(newUser, cb) {
-                            if (window.config.user) {
-                                if (config.user.user_id !== newUser.email) {
-                                    return cb("already logged in as "+config.user.user_id)
-                                } else {
-                                    // we got a new facebook token
-                                    config.user.access_token = newUser.access_token
-                                    db.put("_local/user", config.user, function(err, ok){
-                                        if (err) {return cb(err)}
-                                        log("updateUser ok")
-                                        config.user._rev = ok.rev
-                                        cb()
-                                    })
-                                }
-                            } else {
-                                newUser.user_id = newUser.email
-                                log("setUser "+JSON.stringify(newUser))
-                                db.put("_local/user", newUser, function(err, ok){
+                        	if (newUser == null) {
+                        		config.user._deleted = true;
+                        		db.put("_local/user", config.user, function(err, ok){
                                     if (err) {return cb(err)}
-                                    log("setUser ok")
-                                    window.config.user = newUser
+                                    log("deleted local user")
+                                    config.user._rev = ok.rev
                                     cb()
                                 })
+                        	} else {
+	                            if (window.config.user) {
+	                                if (config.user.user_id !== newUser.email) {
+	                                    return cb("already logged in as "+config.user.user_id)
+	                                } else {
+	                                    // we got a new facebook token
+	                                    config.user.access_token = newUser.access_token
+	                                    db.put("_local/user", config.user, function(err, ok){
+	                                        if (err) {return cb(err)}
+	                                        log("updateUser ok")
+	                                        config.user._rev = ok.rev
+	                                        cb()
+	                                    })
+	                                }
+	                            } else {
+	                            	
+		                                newUser.user_id = newUser.email
+		                                log("setUser "+JSON.stringify(newUser))
+		                                db.put("_local/user", newUser, function(err, ok){
+		                                    if (err) {return cb(err)}
+		                                    log("setUser ok")
+		                                    window.config.user = newUser
+		                                    cb()
+		                                })
+	                            	}
                             }
                         },
                         db : db,
