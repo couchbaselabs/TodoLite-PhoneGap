@@ -113,31 +113,9 @@ function goIndex() {
         var id = $(this).attr("data-id");
         goList(id)
     })
-    // offer the sign in screen to logged out users
-    if (!config.user) {
-        $(".todo-login").show().click(function(){
-            doFirstLogin(function(err) {
-                if (err) {return loginErr(err)}
-                goIndex()
-            })
-        })
-    } else {
-        $( ".todo-login" ).show().click( function() {
-            doFacebookLogout( config.user.access_token, function(error, data) {
-                if (error) { return logoutError( error ) }
-                // Logout Success
-                alert( "You are now logged out!" )
-                $( ".todo-login" ).off( "click" );
-                $( ".todo-login" ).show().click( function() {
-                    doFirstLogin( function( error ) {
-                    	// If Previously Logged in triggerSync Will Through Timeout Error
-                        if (error && error != "timeout") { return loginErr( error ) }
-                        goIndex()
-                    } )
-                } )
-            } )
-        } )
-    }
+    
+    setLoginLogoutButton();
+    
     // when the database changes, update the UI to reflect new lists
     window.dbChanged = function() {
         config.views(["lists", {descending : true}], function(err, view) {
@@ -156,9 +134,36 @@ function goIndex() {
 }
 
 /*
-The list UI lets you create todo tasks and check them off or delete them.
-It also links to a screen for sharing each list with a different set of friends.
-*/
+ * This is a function that defines the login and logout button
+ */
+
+function setLoginLogoutButton() {
+	// offer the sign in screen to logged out users
+	if (!config.user) {
+		$( ".todo-login" ).show().click( function() {
+			doFirstLogin( function(error) {
+				//Timeout will happen on re-login perhaps triggerSync should be stopped on logout.
+				if (error && error != "timeout") { return loginErr( error ) }
+				goIndex()
+			} )
+		} )
+	} else {
+		$( ".todo-login" ).show().click( function() {
+			doFacebookLogout( config.user.access_token, function(error, data) {
+				if (error) { return logoutError( error ) }
+				$( ".todo-login" ).off( "click" );
+				// Logout Success
+				alert( "You are now logged out!" );
+				setLoginLogoutButton();
+			} )
+		} )
+	}
+}
+
+/*
+ * The list UI lets you create todo tasks and check them off or delete them. It
+ * also links to a screen for sharing each list with a different set of friends.
+ */
 
 function goList(id) {
     config.db.get(id, function(err, doc){
