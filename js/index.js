@@ -517,8 +517,13 @@ push and pull
 
 function triggerSync(cb, retryCount) {
     if (!config.user) {
-    	if (pushSync) pushSync.cancel()
-    	if (pullSync) pullSync.cancel()
+    	if (pushSync) {
+    		pushSync.cancel(function(err, ok) {
+    			if (pullSync) {
+    				pullSync.cancel(function(err, ok) {})
+    			}
+    		})
+    	}
         return log("no user")
     }
     var remote = {
@@ -557,6 +562,7 @@ function triggerSync(cb, retryCount) {
 	                    if (err) {
 	                        return loginErr(err)
 	                    }
+	                    challenged = false;
 	                    triggerSync(cb, retryCount)
 	                })
                 }
