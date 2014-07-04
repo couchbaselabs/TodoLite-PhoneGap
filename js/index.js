@@ -552,6 +552,7 @@ function triggerSync(cb, retryCount) {
             pullSync.cancel(function(err, ok) {
                 if (retryCount == 0) {return cb("sync retry limit reached")}
                 retryCount--
+                if (!config.user) {return cb("No User Defined")}
                 getNewFacebookToken(function(err, ok) {
                     if (err) {
                         return loginErr(err)
