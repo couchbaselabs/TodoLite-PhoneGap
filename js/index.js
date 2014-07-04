@@ -519,10 +519,10 @@ push and pull
 
 function triggerSync(cb, retryCount) {
     if (!config.user) {
-    	if (pushSync) {
+    	if (typeof pushSync != "undefined") {
     		pushSync.cancel(function(err, ok) {
     			if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
-    			if (pullSync) {
+    			if (typeof pullSync != "undefined") {
     				pullSync.cancel(function(err, ok) {
     					if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
     					return log("Sync Canceled")
