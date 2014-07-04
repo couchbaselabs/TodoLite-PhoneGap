@@ -142,7 +142,8 @@ function setLoginLogoutButton() {
 	if (!config.user) {
 		$( ".todo-login" ).show().click( function() {
 			doFirstLogin( function(error) {
-				//Timeout will happen on re-login perhaps triggerSync should be stopped on logout.
+				//If re-logging in tiggerSync will through timeout error
+	        	//TODO: stop triggerSync on Logout.
 				if (error && error != "timeout") { return loginErr( error ) }
 				goIndex()
 			} )
@@ -294,7 +295,9 @@ The sharing and login management stuff
 function doShare(id) {
     if (!config.user) {
         doFirstLogin(function(err) {
-            if (err) {
+        	//If re-logging in tiggerSync will through timeout error
+        	//TODO: stop triggerSync on Logout
+            if (err && err != "timeout") {
                 return loginErr(err)
             }
             log("login done", err, config.user)
@@ -630,6 +633,7 @@ function setupConfig(done) {
                         	        db.put("_local/user", doc , function(err, ok){
 	                                    if (err) {return cb(err)}
 	                                    log("deleted local user")
+	                                    config.user._rev = ok.rev
 	                                    cb()
 	                                })
                         	    })
