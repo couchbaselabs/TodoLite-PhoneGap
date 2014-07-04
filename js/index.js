@@ -517,6 +517,8 @@ push and pull
 
 function triggerSync(cb, retryCount) {
     if (!config.user) {
+    	if (pushSync) pushSync.cancel()
+    	if (pullSync) pullSync.cancel()
         return log("no user")
     }
     var remote = {
