@@ -474,10 +474,10 @@ function doFacebookLogout(token, cb) {
     FacebookInAppBrowser.settings.permissions = 'email'
     FacebookInAppBrowser.logout( token, function( error, data ) {
         if (error) { return cb( error ) }
-        log( "Logged out of facebook" );
+        config.user = null;
+        log( "Logged out of facebook" )
         config.setUser( null, function( error , ok ) {
         	if (error) { return cb( error ) }
-        	config.user = null;
             cb( error , data );
         } )
     } )
@@ -552,13 +552,14 @@ function triggerSync(cb, retryCount) {
             pullSync.cancel(function(err, ok) {
                 if (retryCount == 0) {return cb("sync retry limit reached")}
                 retryCount--
-                if (!config.user) {return cb("No User Defined")}
-                getNewFacebookToken(function(err, ok) {
-                    if (err) {
-                        return loginErr(err)
-                    }
-                    triggerSync(cb, retryCount)
-                })
+                if (config.user) {
+	                getNewFacebookToken(function(err, ok) {
+	                    if (err) {
+	                        return loginErr(err)
+	                    }
+	                    triggerSync(cb, retryCount)
+	                })
+                }
             })
         })
     }
@@ -636,7 +637,6 @@ function setupConfig(done) {
                         	        db.put("_local/user", doc , function(err, ok){
 	                                    if (err) {return cb(err)}
 	                                    log("deleted local user")
-	                                    config.user._rev = ok.rev
 	                                    cb()
 	                                })
                         	    })
