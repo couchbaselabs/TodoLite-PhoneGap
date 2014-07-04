@@ -476,10 +476,12 @@ function doFacebookLogout(token, cb) {
         if (error) { return cb( error ) }
         config.user = null;
         log( "Logged out of facebook" )
-        config.setUser( null, function( error , ok ) {
-        	if (error) { return cb( error ) }
-            cb( error , data );
-        } )
+        triggerSync(function() {
+            config.setUser( null, function( error , ok ) {
+            	if (error) { return cb( error ) }
+                cb( error , data );
+            } )
+        })
     } )
 }
 
