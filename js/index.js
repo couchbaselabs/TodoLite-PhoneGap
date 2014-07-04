@@ -624,13 +624,14 @@ function setupConfig(done) {
                         user : user,
                         setUser : function(newUser, cb) {
                         	if (window.config.user && !newUser) {
-                        		var rev = '';
-                        		if (window.config.user._rev) rev = "?rev=" + window.config.user._rev;
-                        		db.del("_local/user" + rev, config.user , function(err, ok){
-                                    if (err) {return cb(err)}
-                                    log("deleted local user")
-                                    cb()
-                                })
+                                db.get("_local/user", function(err, doc){
+                        	        doc._deleted = true;
+                        	        db.del("_local/user", doc , function(err, ok){
+	                                    if (err) {return cb(err)}
+	                                    log("deleted local user")
+	                                    cb()
+	                                })
+                        	    })
                         	} else {
 	                            if (window.config.user) {
 	                                if (config.user.user_id !== newUser.email) {
