@@ -521,12 +521,17 @@ function triggerSync(cb, retryCount) {
     if (!config.user) {
     	if (pushSync) {
     		pushSync.cancel(function(err, ok) {
+    			if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
     			if (pullSync) {
-    				pullSync.cancel(function(err, ok) {})
+    				pullSync.cancel(function(err, ok) {
+    					if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
+    					return log("Sync Canceled")
+    				})
     			}
     		})
+    	} else {
+    		return log("no user")
     	}
-        return log("no user")
     }
     var remote = {
         url : config.site.syncUrl,
