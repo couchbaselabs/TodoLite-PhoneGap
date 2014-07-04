@@ -619,7 +619,7 @@ function setupConfig(done) {
                         },
                         user : user,
                         setUser : function(newUser, cb) {
-                        	if (newUser == null) {
+                        	if (config.user && newUser == null) {
                         		config.user._deleted = true;
                         		db.put("_local/user", config.user, function(err, ok){
                                     if (err) {return cb(err)}
