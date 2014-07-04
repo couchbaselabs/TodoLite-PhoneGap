@@ -624,11 +624,11 @@ function setupConfig(done) {
                         user : user,
                         setUser : function(newUser, cb) {
                         	if (window.config.user && !newUser) {
-                        		config.user._deleted = true;
-                        		db.put("_local/user", config.user, function(err, ok){
+                        		
+                        		db.delete("_local/user", function(err, ok){
                                     if (err) {return cb(err)}
                                     log("deleted local user")
-                                    config.user._rev = ok.rev
+                                    
                                     cb()
                                 })
                         	} else {
