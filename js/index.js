@@ -625,7 +625,7 @@ function setupConfig(done) {
                         setUser : function(newUser, cb) {
                         	if (window.config.user && !newUser) {
                                 db.get("_local/user", function(err, doc){
-                        	        doc._deleted = true;
+                        	        //doc._deleted = true;
                         	        db.del("_local/user", doc , function(err, ok){
 	                                    if (err) {return cb(err)}
 	                                    log("deleted local user")
