@@ -149,13 +149,17 @@ function setLoginLogoutButton() {
 		} )
 	} else {
 		$( ".todo-login" ).show().click( function() {
-			doFacebookLogout( config.user.access_token, function(error, data) {
-				if (error) { return logoutError( error ) }
-				$( ".todo-login" ).off( "click" );
-				// Logout Success
-				alert( "You are now logged out!" );
+			if (config.user.access_token) {
+				doFacebookLogout( config.user.access_token, function(error, data) {
+					if (error) { return logoutError( error ) }
+					$( ".todo-login" ).off( "click" );
+					// Logout Success
+					alert( "You are now logged out!" );
+					setLoginLogoutButton();
+				} )
+			} else {
 				setLoginLogoutButton();
-			} )
+			}
 		} )
 	}
 }
@@ -619,7 +623,7 @@ function setupConfig(done) {
                         },
                         user : user,
                         setUser : function(newUser, cb) {
-                        	if (config.user && newUser == null) {
+                        	if (window.config.user && !newUser) {
                         		config.user._deleted = true;
                         		db.put("_local/user", config.user, function(err, ok){
                                     if (err) {return cb(err)}
