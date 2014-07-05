@@ -29,12 +29,14 @@ document.addEventListener("deviceready", onDeviceReady, false)
 // var REMOTE_SYNC_URL = "http://10.0.1.12:4984/todos/"
 var REMOTE_SYNC_URL = "http://sync.couchbasecloud.com:4984/todos4"
 
+var triggerSyncReference = null;
 /*
 Initialize the app, connect to the database, draw the initial UI
 */
 
 // run on device ready, call setupConfig kick off application logic
 // with appReady.
+
 
 function onDeviceReady() {
     setupConfig(function(err){
@@ -44,7 +46,7 @@ function onDeviceReady() {
         }
         connectToChanges()
         goIndex()
-        triggerSync(function(err) {
+        triggerSyncReference = triggerSync(function(err) {
             if (err) {console.log("error on sync"+ JSON.stringify(err))}
         })
     })
@@ -363,7 +365,6 @@ function toggleShare(doc, user, cb) {
 /*
 Login and setup existing data for user account
 */
-var triggerSyncReference = null;
 
 function doFirstLogin(cb) {
     doFacebook(function(err, data){
@@ -570,7 +571,7 @@ function triggerSync(cb, retryCount) {
 	                        return loginErr(err)
 	                    }
 	                    challenged = false;
-	                    triggerSync(cb, retryCount)
+	                    triggerSyncReference = triggerSync(cb, retryCount)
 	                })
                 }
             })
