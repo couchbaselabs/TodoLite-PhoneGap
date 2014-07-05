@@ -144,8 +144,8 @@ function setLoginLogoutButton() {
 	if (!config.user) {
 		$( ".todo-login" ).show().click( function() {
 			doFirstLogin( function(error) {
-				//If re-logging in tiggerSync will through timeout error.
-	        	//TODO: Stop triggerSync on Logout.
+				//If re-logging in tiggerSync will through timeout error
+	        	//TODO: stop triggerSync on Logout.
 				if (error && error != "timeout") { return loginErr( error ) }
 				goIndex()
 			} )
@@ -297,8 +297,8 @@ The sharing and login management stuff
 function doShare(id) {
     if (!config.user) {
         doFirstLogin(function(err) {
-        	//If re-logging in tiggerSync will through timeout error.
-        	//TODO: Stop triggerSync on Logout
+        	//If re-logging in tiggerSync will through timeout error
+        	//TODO: stop triggerSync on Logout
             if (err && err != "timeout") {
                 return loginErr(err)
             }
