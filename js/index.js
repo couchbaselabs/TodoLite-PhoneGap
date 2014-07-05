@@ -138,31 +138,31 @@ function goIndex() {
  */
 
 function setLoginLogoutButton() {
-	// offer the sign in screen to logged out users
-	if (!config.user) {
-		$( ".todo-login" ).show().click( function() {
-			doFirstLogin( function(error) {
-				//If re-logging in tiggerSync will through timeout error.
-	        	//TODO: Stop triggerSync on Logout.
-				if (error && error != "timeout") { return loginErr( error ) }
-				goIndex()
-			} )
-		} )
-	} else {
-		$( ".todo-login" ).show().click( function() {
-			if (config.user.access_token) {
-				doFacebookLogout( config.user.access_token, function(error, data) {
-					if (error) { return logoutError( error ) }
-					$( ".todo-login" ).off( "click" );
-					// Logout Success
-					alert( "You are now logged out!" );
-					setLoginLogoutButton()
-				} )
-			} else {
-				setLoginLogoutButton();
-			}
-		} )
-	}
+    // offer the sign in screen to logged out users
+    if (!config.user) {
+        $( ".todo-login" ).show().click( function() {
+            doFirstLogin( function(error) {
+                //If re-logging in tiggerSync will through timeout error.
+                //TODO: Stop triggerSync on Logout.
+                if (error && error != "timeout") { return loginErr( error ) }
+                goIndex()
+            } )
+        } )
+    } else {
+        $( ".todo-login" ).show().click( function() {
+            if (config.user.access_token) {
+                doFacebookLogout( config.user.access_token, function(error, data) {
+                    if (error) { return logoutError( error ) }
+                    $( ".todo-login" ).off( "click" );
+                    // Logout Success
+                    alert( "You are now logged out!" );
+                    setLoginLogoutButton()
+                } )
+            } else {
+                setLoginLogoutButton();
+            }
+        } )
+    }
 }
 
 /*
@@ -295,8 +295,8 @@ The sharing and login management stuff
 function doShare(id) {
     if (!config.user) {
         doFirstLogin(function(err) {
-        	//If re-logging in tiggerSync will through timeout error.
-        	//TODO: Stop triggerSync on Logout
+            //If re-logging in tiggerSync will through timeout error.
+            //TODO: Stop triggerSync on Logout
             if (err && err != "timeout") {
                 return loginErr(err)
             }
@@ -425,13 +425,13 @@ function createMyProfile(cb) {
     log("createMyProfile put "+JSON.stringify(profileData))
     //Check if Profile Document Exists
     config.db.get( "p:"+profileData.user_id, function( error, doc ){
-    	if ( error ) {
-    		// doc does not exists
-    		config.db.put("p:"+profileData.user_id, profileData, cb)
-    	} else {
-    		profileData = doc;
-    		config.db.put("p:"+profileData.user_id, profileData, cb)
-    	}
+        if ( error ) {
+            // doc does not exists
+            config.db.put("p:"+profileData.user_id, profileData, cb)
+        } else {
+            profileData = doc;
+            config.db.put("p:"+profileData.user_id, profileData, cb)
+        }
     })
 }
 
@@ -477,10 +477,10 @@ function doFacebookLogout(token, cb) {
         config.user = null;
         log( "Logged out of facebook" )
         config.setUser( null, function( error , ok ) {
-        	if (error) { return cb( error ) }
-        	config.syncReference.cancelSync( function ( error, ok ) {
-        		cb( error , data )
-        	} )
+            if (error) { return cb( error ) }
+            config.syncReference.cancelSync( function ( error, ok ) {
+                cb( error , data )
+            } )
         } )
     } )
 }
@@ -520,9 +520,9 @@ push and pull
 function triggerSync(cb, retryCount) {
 
     if (!config.user) {
-    	return log("no user")
+        return log("no user")
     } 
-	
+    
     var remote = {
         url : config.site.syncUrl,
         auth : {facebook : {email : config.user.email}} // why is this email?
@@ -548,7 +548,7 @@ function triggerSync(cb, retryCount) {
 
     var challenged = false;
     function authChallenge() {
-    	log ("authChallenge")
+        log ("authChallenge")
         if (challenged) {return}
         challenged = true;
         pushSync.cancel(function(err, ok) {
@@ -556,26 +556,26 @@ function triggerSync(cb, retryCount) {
                 if (retryCount == 0) {return cb("sync retry limit reached")}
                 retryCount--
                 if (config.user) {
-	                getNewFacebookToken(function(err, ok) {
-	                    if (err) {
-	                        return loginErr(err)
-	                    }
-	                    challenged = false;
-	                    triggerSync(cb, retryCount)
-	                })
+                    getNewFacebookToken(function(err, ok) {
+                        if (err) {
+                            return loginErr(err)
+                        }
+                        challenged = false;
+                        triggerSync(cb, retryCount)
+                    })
                 }
             })
         })
     }
     
     function cancelSync( callBack ) {
-    	pushSync.cancel(function(err, ok) {
-			if (err) {return log("pushSync Cancel Error: " + JSON.stringify(err) ) }
-			pullSync.cancel(function(err, ok) {
-				if (err) {return log("pullSync Cancel Error: " + JSON.stringify(err) ) }
-				callBack( err, ok )
-			})
-    	})
+        pushSync.cancel(function(err, ok) {
+            if (err) {return log("pushSync Cancel Error: " + JSON.stringify(err) ) }
+            pullSync.cancel(function(err, ok) {
+                if (err) {return log("pullSync Cancel Error: " + JSON.stringify(err) ) }
+                callBack( err, ok )
+            })
+        })
     }
 
     pushSync.on("auth-challenge", authChallenge)
@@ -599,7 +599,7 @@ function triggerSync(cb, retryCount) {
     pushSync.start()   
     
     var publicAPI = {
-    	cancelSync : cancelSync
+        cancelSync : cancelSync
     }
     return publicAPI;
 }
@@ -648,40 +648,40 @@ function setupConfig(done) {
                         },
                         user : user,
                         setUser : function(newUser, cb) {
-                        	if (!window.config.user && !newUser) {
+                            if (!window.config.user && !newUser) {
                                 db.get("_local/user", function(err, doc){
-                                	if (err) {return cb(err)}
-                        	        doc._deleted = true;
-                        	        db.put("_local/user", doc , function(err, ok){
-	                                    if (err) {return cb(err)}
-	                                    log("deleted local user")
-	                                    cb()
-	                                })
-                        	    })
-                        	} else {
-	                            if (window.config.user) {
-	                                if (config.user.user_id !== newUser.email) {
-	                                    return cb("already logged in as "+config.user.user_id)
-	                                } else {
-	                                    // we got a new facebook token
-	                                    config.user.access_token = newUser.access_token
-	                                    db.put("_local/user", config.user, function(err, ok){
-	                                        if (err) {return cb(err)}
-	                                        log("updateUser ok")
-	                                        config.user._rev = ok.rev
-	                                        cb()
-	                                    })
-	                                }
-	                            } else {
-	                                newUser.user_id = newUser.email
-	                                log("setUser "+JSON.stringify(newUser))
-	                                db.put("_local/user", newUser, function(err, ok){
-	                                    if (err) {return cb(err)}
-	                                    log("setUser ok")
-	                                    window.config.user = newUser
-	                                    cb()
-	                                })
-                            	}
+                                    if (err) {return cb(err)}
+                                    doc._deleted = true;
+                                    db.put("_local/user", doc , function(err, ok){
+                                        if (err) {return cb(err)}
+                                        log("deleted local user")
+                                        cb()
+                                    })
+                                })
+                            } else {
+                                if (window.config.user) {
+                                    if (config.user.user_id !== newUser.email) {
+                                        return cb("already logged in as "+config.user.user_id)
+                                    } else {
+                                        // we got a new facebook token
+                                        config.user.access_token = newUser.access_token
+                                        db.put("_local/user", config.user, function(err, ok){
+                                            if (err) {return cb(err)}
+                                            log("updateUser ok")
+                                            config.user._rev = ok.rev
+                                            cb()
+                                        })
+                                    }
+                                } else {
+                                    newUser.user_id = newUser.email
+                                    log("setUser "+JSON.stringify(newUser))
+                                    db.put("_local/user", newUser, function(err, ok){
+                                        if (err) {return cb(err)}
+                                        log("setUser ok")
+                                        window.config.user = newUser
+                                        cb()
+                                    })
+                                }
                             }
                         },
                         db : db,
