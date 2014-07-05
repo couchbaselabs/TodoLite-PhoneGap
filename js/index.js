@@ -29,14 +29,12 @@ document.addEventListener("deviceready", onDeviceReady, false)
 // var REMOTE_SYNC_URL = "http://10.0.1.12:4984/todos/"
 var REMOTE_SYNC_URL = "http://sync.couchbasecloud.com:4984/todos4"
 
-
 /*
 Initialize the app, connect to the database, draw the initial UI
 */
 
 // run on device ready, call setupConfig kick off application logic
 // with appReady.
-
 
 function onDeviceReady() {
     setupConfig(function(err){
@@ -478,10 +476,11 @@ function doFacebookLogout(token, cb) {
         if (error) { return cb( error ) }
         config.user = null;
         log( "Logged out of facebook" )
-        triggerSync().authChallenge()
         config.setUser( null, function( error , ok ) {
         	if (error) { return cb( error ) }
-            cb( error , data );
+        	triggerSync( function( error, result ) {
+        		cb( error , data )
+        	})
         } )
     } )
 }
@@ -571,7 +570,7 @@ function triggerSync(cb, retryCount) {
 	                        return loginErr(err)
 	                    }
 	                    challenged = false;
-	                    triggerSyncReference = triggerSync(cb, retryCount)
+	                    triggerSync(cb, retryCount)
 	                })
                 }
             })
