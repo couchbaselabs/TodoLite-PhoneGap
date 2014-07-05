@@ -156,7 +156,7 @@ function setLoginLogoutButton() {
 					$( ".todo-login" ).off( "click" );
 					// Logout Success
 					alert( "You are now logged out!" );
-					setLoginLogoutButton();
+					setLoginLogoutButton()
 				} )
 			} else {
 				setLoginLogoutButton();
@@ -478,8 +478,9 @@ function doFacebookLogout(token, cb) {
         log( "Logged out of facebook" )
         config.setUser( null, function( error , ok ) {
         	if (error) { return cb( error ) }
-        	config.syncReference.authChallenge()
-        	cb( error , data )
+        	config.syncReference.cancelSync( function ( error, ok ) {
+        		cb( error , data )
+        	} )
         } )
     } )
 }
@@ -519,19 +520,7 @@ push and pull
 function triggerSync(cb, retryCount) {
 
     if (!config.user) {
-    	if (typeof pushSync != "undefined") {
-    		pushSync.cancel(function(err, ok) {
-    			if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
-    			if (typeof pullSync != "undefined") {
-    				pullSync.cancel(function(err, ok) {
-    					if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
-    					return log("Sync Canceled")
-    				})
-    			}
-    		})
-    	} else {
-    		return log("no user")
-    	}
+    	return log("no user")
     } 
 	
     var remote = {
@@ -559,6 +548,7 @@ function triggerSync(cb, retryCount) {
 
     var challenged = false;
     function authChallenge() {
+    	log ("authChallenge")
         if (challenged) {return}
         challenged = true;
         pushSync.cancel(function(err, ok) {
@@ -576,6 +566,16 @@ function triggerSync(cb, retryCount) {
                 }
             })
         })
+    }
+    
+    function cancelSync( callBack ) {
+    	pushSync.cancel(function(err, ok) {
+			if (err) {return log("pushSync Cancel Error: " + JSON.stringify(err) ) }
+			pullSync.cancel(function(err, ok) {
+				if (err) {return log("pullSync Cancel Error: " + JSON.stringify(err) ) }
+				callBack( err, ok )
+			})
+    	})
     }
 
     pushSync.on("auth-challenge", authChallenge)
@@ -599,7 +599,7 @@ function triggerSync(cb, retryCount) {
     pushSync.start()   
     
     var publicAPI = {
-    	authChallenge : authChallenge
+    	cancelSync : cancelSync
     }
     return publicAPI;
 }
