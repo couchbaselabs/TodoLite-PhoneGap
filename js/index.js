@@ -518,21 +518,7 @@ push and pull
 */
 
 function triggerSync(cb, retryCount) {
-    if (!config.user) {
-    	if (typeof pushSync != "undefined") {
-    		pushSync.cancel(function(err, ok) {
-    			if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
-    			if (typeof pullSync != "undefined") {
-    				pullSync.cancel(function(err, ok) {
-    					if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
-    					return log("Sync Canceled")
-    				})
-    			}
-    		})
-    	} else {
-    		return log("no user")
-    	}
-    }
+
     var remote = {
         url : config.site.syncUrl,
         auth : {facebook : {email : config.user.email}} // why is this email?
@@ -594,9 +580,25 @@ function triggerSync(cb, retryCount) {
     pullSync.on("connected", function(){
         cb()
     })
-    // setTimeout(function(){
-        pushSync.start()
-    // }, 10000)
+    if (!config.user) {
+    	if (typeof pushSync != "undefined") {
+    		pushSync.cancel(function(err, ok) {
+    			if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
+    			if (typeof pullSync != "undefined") {
+    				pullSync.cancel(function(err, ok) {
+    					if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
+    					return log("Sync Canceled")
+    				})
+    			}
+    		})
+    	} else {
+    		return log("no user")
+    	}
+    } else {
+    	pushSync.start()
+    }
+    
+   
 }
 
 /*
