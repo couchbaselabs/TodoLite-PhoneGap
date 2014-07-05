@@ -363,6 +363,7 @@ function toggleShare(doc, user, cb) {
 /*
 Login and setup existing data for user account
 */
+var triggerSyncReference = null;
 
 function doFirstLogin(cb) {
     doFacebook(function(err, data){
@@ -380,7 +381,7 @@ function doFirstLogin(cb) {
                     addMyUsernameToAllLists(function(err) {
                         log("addMyUsernameToAllLists done "+JSON.stringify(err))
                         if (err) {return cb(err)}
-                        triggerSync(function(err, ok){
+                        triggerSyncReference = triggerSync(function(err, ok){
                             log("triggerSync done "+JSON.stringify(err))
                             cb(err, ok)
                         })
@@ -476,12 +477,11 @@ function doFacebookLogout(token, cb) {
         if (error) { return cb( error ) }
         config.user = null;
         log( "Logged out of facebook" )
-        triggerSync(function() {
-            config.setUser( null, function( error , ok ) {
-            	if (error) { return cb( error ) }
-                cb( error , data );
-            } )
-        })
+        triggerSyncReference.authChallenge()
+        config.setUser( null, function( error , ok ) {
+        	if (error) { return cb( error ) }
+            cb( error , data );
+        } )
     } )
 }
 
