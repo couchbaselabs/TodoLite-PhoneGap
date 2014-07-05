@@ -44,7 +44,7 @@ function onDeviceReady() {
         }
         connectToChanges()
         goIndex()
-        triggerSync(function(err) {
+        config.syncReference = triggerSync(function(err) {
             if (err) {console.log("error on sync"+ JSON.stringify(err))}
         })
     })
@@ -380,7 +380,7 @@ function doFirstLogin(cb) {
                     addMyUsernameToAllLists(function(err) {
                         log("addMyUsernameToAllLists done "+JSON.stringify(err))
                         if (err) {return cb(err)}
-                        triggerSync(function(err, ok){
+                        config.syncReference = triggerSync(function(err, ok){
                             log("triggerSync done "+JSON.stringify(err))
                             cb(err, ok)
                         })
@@ -478,9 +478,8 @@ function doFacebookLogout(token, cb) {
         log( "Logged out of facebook" )
         config.setUser( null, function( error , ok ) {
         	if (error) { return cb( error ) }
-        	triggerSync( function( error, result ) {
-        		cb( error , data )
-        	})
+        	config.syncReference.authChallenge()
+        	cb( error , data )
         } )
     } )
 }
@@ -519,6 +518,22 @@ push and pull
 
 function triggerSync(cb, retryCount) {
 
+    if (!config.user) {
+    	if (typeof pushSync != "undefined") {
+    		pushSync.cancel(function(err, ok) {
+    			if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
+    			if (typeof pullSync != "undefined") {
+    				pullSync.cancel(function(err, ok) {
+    					if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
+    					return log("Sync Canceled")
+    				})
+    			}
+    		})
+    	} else {
+    		return log("no user")
+    	}
+    } 
+	
     var remote = {
         url : config.site.syncUrl,
         auth : {facebook : {email : config.user.email}} // why is this email?
@@ -580,25 +595,13 @@ function triggerSync(cb, retryCount) {
     pullSync.on("connected", function(){
         cb()
     })
-    if (!config.user) {
-    	if (typeof pushSync != "undefined") {
-    		pushSync.cancel(function(err, ok) {
-    			if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
-    			if (typeof pullSync != "undefined") {
-    				pullSync.cancel(function(err, ok) {
-    					if (err) {return log("Sync Cancel Error: " + JSON.stringify(err) ) }
-    					return log("Sync Canceled")
-    				})
-    			}
-    		})
-    	} else {
-    		return log("no user")
-    	}
-    } else {
-    	pushSync.start()
-    }
+
+    pushSync.start()   
     
-   
+    var publicAPI = {
+    	authChallenge : authChallenge
+    }
+    return publicAPI;
 }
 
 /*
@@ -686,7 +689,8 @@ function setupConfig(done) {
                         info : info,
                         views : views,
                         server : url,
-                        t : t
+                        t : t,
+                        syncReference : syncReference
                     }
                     if (window.config.user) {
                         registerFacebookToken(done)
