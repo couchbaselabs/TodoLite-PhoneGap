@@ -689,8 +689,7 @@ function setupConfig(done) {
                         info : info,
                         views : views,
                         server : url,
-                        t : t,
-                        syncReference : syncReference
+                        t : t
                     }
                     if (window.config.user) {
                         registerFacebookToken(done)
