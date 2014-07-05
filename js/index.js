@@ -46,7 +46,7 @@ function onDeviceReady() {
         }
         connectToChanges()
         goIndex()
-        config.triggerSyncReference = triggerSync(function(err) {
+        triggerSync(function(err) {
             if (err) {console.log("error on sync"+ JSON.stringify(err))}
         })
     })
@@ -382,7 +382,7 @@ function doFirstLogin(cb) {
                     addMyUsernameToAllLists(function(err) {
                         log("addMyUsernameToAllLists done "+JSON.stringify(err))
                         if (err) {return cb(err)}
-                        triggerSyncReference = triggerSync(function(err, ok){
+                        triggerSync(function(err, ok){
                             log("triggerSync done "+JSON.stringify(err))
                             cb(err, ok)
                         })
@@ -478,7 +478,7 @@ function doFacebookLogout(token, cb) {
         if (error) { return cb( error ) }
         config.user = null;
         log( "Logged out of facebook" )
-        window.config.triggerSync.authChallenge()
+        triggerSync().authChallenge()
         config.setUser( null, function( error , ok ) {
         	if (error) { return cb( error ) }
             cb( error , data );
@@ -685,8 +685,7 @@ function setupConfig(done) {
                         info : info,
                         views : views,
                         server : url,
-                        t : t,
-                        triggerSync : triggerSync
+                        t : t
                     }
                     if (window.config.user) {
                         registerFacebookToken(done)
