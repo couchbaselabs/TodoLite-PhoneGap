@@ -33,10 +33,10 @@ var REMOTE_SYNC_PROTOCOL = "http://"
 var REMOTE_SYNC_SERVER = "sync.couchbasecloud.com"
 var REMOTE_SYNC_PORT = "4984"
 var REMOTE_SYNC_DATABASE = "todolite-phonegap"
-var REMOTE_SERVER_LOGIN_URL = "http://couchbase.triskaideca.com/login"
-var REMOTE_SERVER_LOGOUT_URL = "http://couchbase.triskaideca.com/logout"
-var SERVER_LOGIN = true
-var FACEBOOK_LOGIN = false
+var REMOTE_SERVER_LOGIN_URL = "http://couchbase.triskaideca.com/todologin"
+var REMOTE_SERVER_LOGOUT_URL = "http://couchbase.triskaideca.com/todologout"
+var SERVER_LOGIN = false
+var FACEBOOK_LOGIN = true
 
 /*
 Initialize the app, connect to the database, draw the initial UI
