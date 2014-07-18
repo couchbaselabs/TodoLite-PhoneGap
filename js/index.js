@@ -30,7 +30,7 @@ document.addEventListener("deviceready", onDeviceReady, false)
 var REMOTE_SYNC_URL = "http://sync.couchbasecloud.com:4984/todos4"
 
 var REMOTE_SYNC_PROTOCOL = "http://"
-var REMOTE_SYNC_SERVER = "localhost"
+var REMOTE_SYNC_SERVER = "couchbase.triskaideca.com"
 //var REMOTE_SYNC_SERVER = "sync.couchbasecloud.com"
 var REMOTE_SYNC_PORT = "4984"
 //var REMOTE_SYNC_DATABASE = "todolite-phonegap"
