@@ -167,5 +167,39 @@
     <img src="{{image_path}}" class="todo-image" />
 </div>
 </script>
+<script type="text/mustache" id="login-mu">
+<header>
+    <div class="topcoat-navigation-bar">
+        <div class="topcoat-navigation-bar__item left quarter todo-padded">
+            &nbsp;
+        </div>
+        <div class="topcoat-navigation-bar__item center half">
+            <h1 class="topcoat-navigation-bar__title">Server Login:</h1>
+        </div>
+        <div class="topcoat-navigation-bar__item right quarter todo-padded">
+            <button class="todo-login topcoat-button todo-small">&#9786;</button>
+        </div>
+    </div>
+	<div class="topcoat-navigation-bar">
+    </div>
+</header>
+<div id="scrollable">
+	<div class="topcoat-list__container">
+		<form>
+			<ul class="topcoat-list">
+        		<li class="topcoat-list__item" data-id="username">
+            		<input type="text" class="topcoat-text-input" name="username" value="" placeholder="Username" /> 
+				</li>
+				<li class="topcoat-list__item" data-id="password">
+					<input type="password" class="topcoat-text-input" name="password" value="" placeholder="Password" /> 
+				</li>
+				<li class="topcoat-list__item" data-id="login_submit">
+					<input type="submit" class="topcoat-button" name="login" value=" Login " /> 
+				</li>
+    		</ul>
+ 		</form>
+	</div>
+</div>
+</script>
     </body>
 </html>
