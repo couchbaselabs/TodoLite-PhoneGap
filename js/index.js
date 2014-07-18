@@ -35,6 +35,7 @@ var REMOTE_SYNC_PORT = "4984"
 var REMOTE_SYNC_DATABASE = "todolite-phonegap"
 var REMOTE_SERVER_LOGIN_URL = "http://couchbase.triskaideca.com/todologin"
 var REMOTE_SERVER_LOGOUT_URL = "http://couchbase.triskaideca.com/todologout"
+	
 var SERVER_LOGIN = false
 var FACEBOOK_LOGIN = true
 
