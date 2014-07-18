@@ -168,7 +168,7 @@ function setLoginLogoutButton() {
     	if( SERVER_LOGIN ) {
 			$( ".todo-login" ).show().click( function() {
 				doServerLogout( function(error, data) {
-					if (error.error) {
+					if (error) {
 						if (error.reason) {
 							alert( "Can not Logout: " + error.reason )
 						} else {
@@ -502,14 +502,16 @@ function doServerLogin( callBack ) {
  * User is set to null and sync replication is canceled.
  */
 
-function doServerLogout(callBack) {
+function doServerLogout( callBack ) {
 	log( "Do Server Logout" );
 	// check for internet connection
 	if (navigator && navigator.connection) {
 		log( "connection " + navigator.connection.type )
-		if (navigator.connection.type == "none") { return callBack( {
-			reason : "No network connection"
-		} ) }
+		if (navigator.connection.type == "none") { 
+			return callBack( {
+				reason : "No network connection"
+			} )
+		}
 	}
 	var url = REMOTE_SERVER_LOGOUT_URL;
 	coax.get( url, function(error, result) {
