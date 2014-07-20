@@ -530,12 +530,12 @@ function doServerLogout( callBack ) {
 }
 
 /*
- * A Server SessionID does not need be registered with the sync gateway
+ * registerServer is called upon startup to log into the server.
  */
 
 function registerServer(callBack) {
 	log( "Resister Server SessionID" )
-	callBack()
+	doServerLogin( callBack )
 }
 
 function registerFacebookToken(cb) {
