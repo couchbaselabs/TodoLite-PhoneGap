@@ -401,9 +401,9 @@ function goServerLogin() {
 	$( "#content form" ).submit( function(e) {
 		e.preventDefault()
 		var doc = jsonform( this )
-		config.user = {
-			"name" : encodeURIComponent(doc.email), "password" : encodeURIComponent(doc.password)
-		};
+		config.user = {};
+		config.user.name = encodeURIComponent(doc.email);
+		config.user.password = encodeURIComponent(doc.password);
 		doFirstLogin( function(error, result) {
 			if (error) { return loginErr( error ) }
 			$( "#content form input" ).val( "" ) // Clear Form
