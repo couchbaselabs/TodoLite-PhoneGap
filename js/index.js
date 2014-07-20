@@ -402,8 +402,8 @@ function goServerLogin() {
 		e.preventDefault()
 		var doc = jsonform( this );
 		config.user = {};
-		config.user.name = encodeURIComponent( doc.email );
-		config.user.password = encodeURIComponent( doc.password );
+		config.user.name = doc.email;
+		config.user.password = doc.password;
 		doFirstLogin( function(error, result) {
 			if (error) { return loginErr( error ) }
 			$( "#content form input" ).val( "" ) // Clear Form
@@ -681,7 +681,7 @@ function triggerSync(cb, retryCount) {
     
 	if (SERVER_LOGIN) {
 		var remote = { 
-			url : REMOTE_SYNC_PROTOCOL + config.user.name + ":" + config.user.password + "@" + REMOTE_SYNC_SERVER + ":" + REMOTE_SYNC_PORT + "/" + REMOTE_SYNC_DATABASE + "/"
+			url : REMOTE_SYNC_PROTOCOL + encodeURIComponent( config.user.name ) + ":" + encodeURIComponent( config.user.password ) + "@" + REMOTE_SYNC_SERVER + ":" + REMOTE_SYNC_PORT + "/" + REMOTE_SYNC_DATABASE + "/"
 		};
 	} else if (FACEBOOK_LOGIN) {
 	    var remote = {
