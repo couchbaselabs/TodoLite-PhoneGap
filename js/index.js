@@ -178,7 +178,7 @@ function setLoginLogoutButton() {
 					// Logout Success
 					alert( "You are now logged out!" )
 					$( ".todo-login" ).off( "click" )
-					setLoginLogoutButton( callBackFunction )
+					setLoginLogoutButton()
 				} )
 			} )
     	} else if( FACEBOOK_LOGIN ) {
