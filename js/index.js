@@ -842,6 +842,7 @@ function setupConfig(done) {
     										config.user.sessionID = newUser.sessionID
     										config.user.name = newUser.username;
     										config.user.user_id = newUser.username;
+    										config.user.email = newUser.username;
     										config.user.password = newUser.password;
     										db.put( "_local/user", config.user, function(err, ok) {
     											if (err) { return cb( err ) }
@@ -855,6 +856,7 @@ function setupConfig(done) {
     									config.user.sessionID = newUser.sessionID
     									config.user.name = newUser.username;
     									config.user.user_id = newUser.username;
+    									config.user.email = newUser.username;
     									config.user.password = newUser.password;
     									db.put( "_local/user", config.user, function(err, ok) {
     										if (err) { return cb( err ) }
