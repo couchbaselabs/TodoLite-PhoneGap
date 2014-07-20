@@ -402,7 +402,7 @@ function goServerLogin() {
 		e.preventDefault()
 		var doc = jsonform( this )
 		config.user = {
-			"name" : doc.email, "password" : doc.password
+			"name" : encodeURIComponent(doc.email), "password" : encodeURIComponent(doc.password)
 		};
 		doFirstLogin( function(error, result) {
 			if (error) { return loginErr( error ) }
