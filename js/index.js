@@ -483,7 +483,7 @@ function doServerLogin( callBack ) {
 		var url = REMOTE_SERVER_LOGIN_URL;
 		var login = coax( url );
 		var credentials = '{ "username" : "' + config.user.name + '", "password" : "' + config.user.password + '" }';
-		log( "http " + url + " " + JSON.parse( credentials ) )
+		log( "http " + url + " " + JSON.strigify( credentials ) )
 		login.post( JSON.parse( credentials ), function(error, result) {
 			if (error) { return callBack( error ) }
 			log( "Server Login Result:", result )
