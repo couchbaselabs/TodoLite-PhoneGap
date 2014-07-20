@@ -400,10 +400,9 @@ function goServerLogin() {
 	drawContent( config.t.login() )
 	$( "#content form" ).submit( function(e) {
 		e.preventDefault()
-		var doc = jsonform( this )
-		config.user = {};
-		config.user.name = encodeURIComponent(doc.email);
-		config.user.password = encodeURIComponent(doc.password);
+		var doc = jsonform( this );
+		config.user.name = encodeURIComponent( doc.email );
+		config.user.password = encodeURIComponent( doc.password );
 		doFirstLogin( function(error, result) {
 			if (error) { return loginErr( error ) }
 			$( "#content form input" ).val( "" ) // Clear Form
@@ -483,7 +482,7 @@ function doServerLogin( callBack ) {
 		var url = REMOTE_SERVER_LOGIN_URL;
 		var login = coax( url );
 		var credentials = '{ "username" : "' + config.user.name + '", "password" : "' + config.user.password + '" }';
-		log( "http " + url + " " + JSON.strigify( credentials ) )
+		log( "http " + url + " " + credentials )
 		login.post( JSON.parse( credentials ), function(error, result) {
 			if (error) { return callBack( error ) }
 			log( "Server Login Result:", result )
