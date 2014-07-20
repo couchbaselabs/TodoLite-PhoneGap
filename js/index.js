@@ -401,6 +401,7 @@ function goServerLogin() {
 	$( "#content form" ).submit( function(e) {
 		e.preventDefault()
 		var doc = jsonform( this );
+		config.user = {};
 		config.user.name = encodeURIComponent( doc.email );
 		config.user.password = encodeURIComponent( doc.password );
 		doFirstLogin( function(error, result) {
