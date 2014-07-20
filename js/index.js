@@ -402,7 +402,7 @@ function goServerLogin() {
 		e.preventDefault()
 		var doc = jsonform( this )
 		config.user = {
-			"name" : doc.username, "password" : doc.password
+			"name" : doc.email, "password" : doc.password
 		};
 		doFirstLogin( function(error, result) {
 			if (error) { return loginErr( error ) }
@@ -838,7 +838,7 @@ function setupConfig(done) {
     										return cb( "already logged in as " + config.user.name )
     									} else {
     										/* We Got a New Session */
-    										log( "setUser " + JSON.stringify( newUser ) )
+    										log( "New Session setUser " + JSON.stringify( newUser ) )
     										config.user.sessionID = newUser.sessionID
     										config.user.name = newUser.username;
     										config.user.user_id = newUser.username;
