@@ -824,7 +824,7 @@ function setupConfig(done) {
                                 })
                             } else {
                             	if (SERVER_LOGIN) {
-    								if (window.config.user) {
+    								if (config.user.name) {
     									if (config.user.name !== newUser.username) {
     										return cb( "already logged in as " + config.user.name )
     									} else {
