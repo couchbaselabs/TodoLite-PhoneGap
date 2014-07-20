@@ -430,7 +430,7 @@ function doFirstLogin(cb) {
 			if (error) { return cb( error ) }
 			config.setUser( data, function(error, ok) {
 				if (error) { return cb( error ) }
-				triggerSync( function(error, ok) {
+				config.syncReference = triggerSync( function(error, ok) {
 					log( "triggerSync done " + JSON.stringify( error ) )
 					cb( error, ok )
 				} )
