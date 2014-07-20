@@ -27,7 +27,8 @@ new fastclick.FastClick(document.body)
 document.addEventListener("deviceready", onDeviceReady, false)
 
 // var REMOTE_SYNC_URL = "http://10.0.1.12:4984/todos/"
-var REMOTE_SYNC_URL = "http://sync.couchbasecloud.com:4984/todos4"
+// var REMOTE_SYNC_URL = "http://sync.couchbasecloud.com:4984/todos4"
+var REMOTE_SYNC_URL = "http://couchbase.triskaideca.com:4984/todos"
 
 var REMOTE_SYNC_PROTOCOL = "http://"
 var REMOTE_SYNC_SERVER = "couchbase.triskaideca.com"
