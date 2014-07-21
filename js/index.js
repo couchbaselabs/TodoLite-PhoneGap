@@ -39,8 +39,8 @@ var REMOTE_SYNC_DATABASE = "todos"
 var REMOTE_SERVER_LOGIN_URL = "http://couchbase.triskaideca.com/todologin"
 var REMOTE_SERVER_LOGOUT_URL = "http://couchbase.triskaideca.com/todologout"
 	
-var SERVER_LOGIN = false
-var FACEBOOK_LOGIN = true
+var SERVER_LOGIN = true
+var FACEBOOK_LOGIN = false
 
 /*
 Initialize the app, connect to the database, draw the initial UI
@@ -724,7 +724,7 @@ function triggerSync(cb, retryCount) {
 						config.setUser( result, function(err, ok) {
 							if (err) { return loginErr( err ) }
 							challenged = false;
-							triggerSync( cb, retryCount )
+							config.syncReference = triggerSync( cb, retryCount )
 						} )
 					} )
 				} else if (FACEBOOK_LOGIN) {
@@ -734,7 +734,7 @@ function triggerSync(cb, retryCount) {
 	                            return loginErr(err)
 	                        }
 	                        challenged = false;
-	                        triggerSync(cb, retryCount)
+	                        config.syncReference = triggerSync( cb, retryCount )
 	                    })
 	                }
 				}
@@ -862,7 +862,6 @@ function setupConfig(done) {
     									db.put( "_local/user", config.user, function(err, ok) {
     										if (err) { return cb( err ) }
     										log( "setUser ok" )
-    										config.user._rev = ok.rev
     										cb()
     									} )
     								}
