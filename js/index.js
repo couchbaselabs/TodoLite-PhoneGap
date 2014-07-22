@@ -691,6 +691,7 @@ function triggerSync(cb, retryCount) {
 	        auth : {facebook : {email : config.user.email}} // why is this email?
 	    };
 	}
+	log (" Remote: " + JSON.stringify( remote ) )
     var push = {
         source : appDbName,
         target : remote,
