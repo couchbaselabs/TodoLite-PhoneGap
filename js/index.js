@@ -437,7 +437,7 @@ function doFirstLogin(cb) {
                         log("addMyUsernameToAllLists done "+JSON.stringify(err))
                         if (err) {return cb(err)}
 						config.syncReference = triggerSync( function(error, ok) {
-							log( "triggerSync done, Error:" + JSON.stringify( error ) + " , ok:" + JSON.strignify( ok ) )
+							log( "triggerSync done, Error:" + JSON.stringify( error ) + " , ok:" + JSON.stringify( ok ) )
 							cb( error, ok )
 						} )
                     } )
