@@ -39,8 +39,8 @@ var REMOTE_SYNC_DATABASE = "todos"
 var REMOTE_SERVER_LOGIN_URL = "http://couchbase.triskaideca.com/todologin"
 var REMOTE_SERVER_LOGOUT_URL = "http://couchbase.triskaideca.com/todologout"
 	
-var SERVER_LOGIN = true
-var FACEBOOK_LOGIN = false
+var SERVER_LOGIN = false
+var FACEBOOK_LOGIN = true
 
 /*
 Initialize the app, connect to the database, draw the initial UI
@@ -543,6 +543,9 @@ function doServerLogout( callBack ) {
 
 function registerServer(callBack) {
 	log( "Resister Server SessionID" )
+	if (!config.user.user_id) {
+		doFirstLogin( callBack )
+	}
 //	doServerLogin( function(error, data) {
 //		if (error) { return callBack( error ) }
 //		config.setUser( data, function(error, ok) {
