@@ -673,6 +673,7 @@ completes, we know we have a valid connection, so we can trigger a continuous
 push and pull
 
 */
+var triggerSyncStarted = false;
 
 function triggerSync(cb, retryCount) {
 
@@ -770,7 +771,11 @@ function triggerSync(cb, retryCount) {
         cb()
     })
 
-    pushSync.start()   
+    //start pushSync only once
+    if (!triggerSyncStarted) {
+    	triggerSyncStarted = true;
+    	pushSync.start()
+    }
     
     var publicAPI = {
         cancelSync : cancelSync
