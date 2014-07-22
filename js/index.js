@@ -431,10 +431,17 @@ function doFirstLogin(cb) {
 			if (error) { return cb( error ) }
 			config.setUser( data, function(error, ok) {
 				if (error) { return cb( error ) }
-				config.syncReference = triggerSync( function(error, ok) {
-					log( "triggerSync done, Error:" + JSON.stringify( error ) + " , ok:" + JSON.strignify( ok ) )
-					cb( error, ok )
-				} )
+                createMyProfile(function(err){
+                    log("createMyProfile done "+JSON.stringify(err))
+                    addMyUsernameToAllLists(function(err) {
+                        log("addMyUsernameToAllLists done "+JSON.stringify(err))
+                        if (err) {return cb(err)}
+						config.syncReference = triggerSync( function(error, ok) {
+							log( "triggerSync done, Error:" + JSON.stringify( error ) + " , ok:" + JSON.strignify( ok ) )
+							cb( error, ok )
+						} )
+                    } )
+                } )
 			} )
 		} )
 	} else if (FACEBOOK_LOGIN) {
