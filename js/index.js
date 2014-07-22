@@ -1036,7 +1036,7 @@ function syncManager(serverUrl, syncDefinition) {
                 if (!done && !tooLate) {
                     setTimeout(function() {
                         pollForStatus(info)
-                    }, 200)
+                    }, 500)
                 } else if (tooLate) {
                     callHandlers("error", "timeout")
                 }
@@ -1053,7 +1053,7 @@ function syncManager(serverUrl, syncDefinition) {
                 if (err) {
                     callHandlers("error", err)
                 } else {
-                    pollForStatus(info, 10000)
+                    pollForStatus(info, 30000)
                     callHandlers("started", info)
                 }
             }
