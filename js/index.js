@@ -432,7 +432,7 @@ function doFirstLogin(cb) {
 			config.setUser( data, function(error, ok) {
 				if (error) { return cb( error ) }
 				config.syncReference = triggerSync( function(error, ok) {
-					log( "triggerSync done " + JSON.stringify( error ) )
+					log( "triggerSync done, Error:" + JSON.stringify( error ) + " , ok:" + JSON.strignify( ok ) )
 					cb( error, ok )
 				} )
 			} )
@@ -1059,7 +1059,7 @@ function syncManager(serverUrl, syncDefinition) {
                 if (err) {
                     callHandlers("error", err)
                 } else {
-                    pollForStatus(info, 30000)
+                    pollForStatus(info, 10000)
                     callHandlers("started", info)
                 }
             }
@@ -1088,7 +1088,7 @@ function syncManager(serverUrl, syncDefinition) {
     function processTaskInfo(id, cb) {
         taskInfo(id, function(err, task) {
             if (err) {return cb(err)}
-            log("task", task)
+            log("task" + JSON.stringify( task ), task)
 
             publicAPI.task = task
             if (task.error && task.error[0] == 401) {
