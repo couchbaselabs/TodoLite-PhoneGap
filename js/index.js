@@ -543,16 +543,16 @@ function doServerLogout( callBack ) {
 
 function registerServer(callBack) {
 	log( "Resister Server SessionID" )
-	doServerLogin( function(error, data) {
-		if (error) { return callBack( error ) }
-		config.setUser( data, function(error, ok) {
-			if (error) { return callBack( error ) }
-			config.syncReference = triggerSync( function(error, ok) {
-				log( "triggerSync done " + JSON.stringify( error ) )
-				callBack( error, ok )
-			} )
-		} )
-	} )
+//	doServerLogin( function(error, data) {
+//		if (error) { return callBack( error ) }
+//		config.setUser( data, function(error, ok) {
+//			if (error) { return callBack( error ) }
+//			config.syncReference = triggerSync( function(error, ok) {
+//				log( "triggerSync done " + JSON.stringify( error ) )
+//				callBack( error, ok )
+//			} )
+//		} )
+//	} )
 }
 
 function registerFacebookToken(cb) {
