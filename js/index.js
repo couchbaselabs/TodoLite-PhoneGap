@@ -862,6 +862,7 @@ function setupConfig(done) {
     									db.put( "_local/user", config.user, function(err, ok) {
     										if (err) { return cb( err ) }
     										log( "setUser ok" )
+    										config.user._rev = ok.rev
     										cb()
     									} )
     								}
