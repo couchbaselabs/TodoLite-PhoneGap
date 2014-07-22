@@ -72,7 +72,7 @@ window.dbChanged = function(){}
 function connectToChanges() {
   config.db.changes({since : config.info.update_seq}, function(err, change){
       lastSeq = change.seq
-      log("change", err, change)
+      log("change" + JSON.stringify( [ err, change ] ), err, change)
       window.dbChanged()
   })
 }
@@ -683,7 +683,6 @@ completes, we know we have a valid connection, so we can trigger a continuous
 push and pull
 
 */
-var triggerSyncStarted = false;
 
 function triggerSync(cb, retryCount) {
 
@@ -782,11 +781,7 @@ function triggerSync(cb, retryCount) {
         cb()
     })
 
-    //start pushSync only once
-    if (!triggerSyncStarted) {
-    	triggerSyncStarted = true;
-    	pushSync.start()
-    }
+    pushSync.start()  
     
     var publicAPI = {
         cancelSync : cancelSync
@@ -1052,7 +1047,7 @@ function syncManager(serverUrl, syncDefinition) {
                 if (!done && !tooLate) {
                     setTimeout(function() {
                         pollForStatus(info)
-                    }, 500)
+                    }, 200)
                 } else if (tooLate) {
                     callHandlers("error", "timeout")
                 }
