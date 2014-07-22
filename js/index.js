@@ -424,44 +424,50 @@ function goServerLogin() {
 /*
 Login and setup existing data for user account
 */
+var loginOnceLock = true;
 
 function doFirstLogin(cb) {
-	if (SERVER_LOGIN) {
-		doServerLogin( function(error, data) {
-			if (error) { return cb( error ) }
-			config.setUser( data, function(error, ok) {
+	if (loginOnceLock) {
+		loginOnceLock = false;
+		if (SERVER_LOGIN) {
+			doServerLogin( function(error, data) {
 				if (error) { return cb( error ) }
-				config.syncReference = triggerSync( function(error, ok) {
-					log( "triggerSync done " + JSON.stringify( error ) )
-					cb( error, ok )
+				config.setUser( data, function(error, ok) {
+					if (error) { return cb( error ) }
+					config.syncReference = triggerSync( function(error, ok) {
+						log( "triggerSync done " + JSON.stringify( error ) )
+						loginOnceLock = true;
+						cb( error, ok )
+					} )
 				} )
 			} )
-		} )
-	} else if (FACEBOOK_LOGIN) {
-	    doFacebook(function(err, data){
-	        if (err) {return cb(err)}
-	        config.setUser(data, function(err, ok){
-	            if (err) {return cb(err)}
-	            registerFacebookToken(function(err,ok){
-	                log("registerFacebookToken done "+JSON.stringify(err))
-	                if (err) {
-	                    log("registerFacebookToken err "+JSON.stringify([err, ok]))
-	                    return cb(err)
-	                }
-	                createMyProfile(function(err){
-	                    log("createMyProfile done "+JSON.stringify(err))
-	                    addMyUsernameToAllLists(function(err) {
-	                        log("addMyUsernameToAllLists done "+JSON.stringify(err))
-	                        if (err) {return cb(err)}
-	                        config.syncReference = triggerSync(function(err, ok){
-	                            log("triggerSync done "+JSON.stringify(err))
-	                            cb(err, ok)
-	                        })
-	                    })
-	                })
-	            })
-	        })
-	    })
+		} else if (FACEBOOK_LOGIN) {
+		    doFacebook(function(err, data){
+		        if (err) {return cb(err)}
+		        config.setUser(data, function(err, ok){
+		            if (err) {return cb(err)}
+		            registerFacebookToken(function(err,ok){
+		                log("registerFacebookToken done "+JSON.stringify(err))
+		                if (err) {
+		                    log("registerFacebookToken err "+JSON.stringify([err, ok]))
+		                    return cb(err)
+		                }
+		                createMyProfile(function(err){
+		                    log("createMyProfile done "+JSON.stringify(err))
+		                    addMyUsernameToAllLists(function(err) {
+		                        log("addMyUsernameToAllLists done "+JSON.stringify(err))
+		                        if (err) {return cb(err)}
+		                        config.syncReference = triggerSync(function(err, ok){
+		                            log("triggerSync done "+JSON.stringify(err))
+		                            loginOnceLock = true;
+		                            cb(err, ok)
+		                        })
+		                    })
+		                })
+		            })
+		        })
+		    })
+		}
 	}
 }
 
