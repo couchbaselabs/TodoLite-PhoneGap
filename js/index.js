@@ -1089,7 +1089,6 @@ function syncManager(serverUrl, syncDefinition) {
         taskInfo(id, function(err, task) {
             if (err) {return cb(err)}
             log("task" + JSON.stringify( task ), task)
-
             publicAPI.task = task
             if (task.error && task.error[0] == 401) {
                 cb(true)
