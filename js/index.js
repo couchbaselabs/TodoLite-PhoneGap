@@ -133,6 +133,7 @@ function goIndex() {
     window.dbChanged = function() {
         config.views(["lists", {descending : true}], function(err, view) {
             log("lists " + JSON.stringify( view ) , view)
+            
             $("#scrollable").html(config.t.indexList(view))
             $("#scrollable li").on("swipeRight", function() {
                 var id = $(this).attr("data-id")
