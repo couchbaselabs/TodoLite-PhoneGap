@@ -132,7 +132,7 @@ function goIndex() {
     // when the database changes, update the UI to reflect new lists
     window.dbChanged = function() {
         config.views(["lists", {descending : true}], function(err, view) {
-            log("lists", view)
+            log("lists " + JSON.stringify( view ) , view)
             $("#scrollable").html(config.t.indexList(view))
             $("#scrollable li").on("swipeRight", function() {
                 var id = $(this).attr("data-id")
