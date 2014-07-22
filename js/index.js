@@ -487,7 +487,7 @@ function doServerLogin( callBack ) {
 		log( "http " + url + " " + credentials )
 		login.post( JSON.parse( credentials ), function(error, result) {
 			if (error) { return callBack( error ) }
-			log( "Server Login Result:", result )
+			log( "Server Login Result:" + JSON.stringify( result ) )
 			callBack( false, result )
 		} )
 	} else {
@@ -517,7 +517,7 @@ function doServerLogout( callBack ) {
 	var url = REMOTE_SERVER_LOGOUT_URL;
 	coax.get( url, function(error, result) {
 		config.user = null;
-		log( "Server Logout Result:" + result + " Error:" + error )
+		log( "Server Logout Result:" + JSON.stringify(result) + " Error:" + error )
 		if (error) { return callBack( error ) }
         config.setUser( null, function( error , ok ) {
         	log( "User is Set to Null" )
