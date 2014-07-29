@@ -153,14 +153,18 @@ function goIndex() {
 
 function setLoginLogoutButton() {
     // offer the sign in screen to logged out users
-    if (!config.user.user_id) {
+    if (!config.user) {
     	if( SERVER_LOGIN ) {
     		$( ".todo-login" ).show().click( function() {
+    			$( ".todo-login" ).off( "click" );
+            	setLoginLogoutButton()
 				goServerLogin();
 			} )
     	} else if( FACEBOOK_LOGIN ) {
     		$( ".todo-login" ).show().click( function() {
                 doFirstLogin( function(error) {
+                	$( ".todo-login" ).off( "click" );
+                	setLoginLogoutButton()
                     if (error) { return loginErr( error ) }
                     goIndex()
                 } )
