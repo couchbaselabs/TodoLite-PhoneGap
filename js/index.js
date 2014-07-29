@@ -706,11 +706,11 @@ function triggerSync(cb, retryCount) {
     var push = {
         source : appDbName,
         target : remote,
-        continuous : false
+        continuous : true
     }, pull = {
         target : appDbName,
         source : remote,
-        continuous : false
+        continuous : true
     },
 
     pushSync = syncManager(config.server, push),
