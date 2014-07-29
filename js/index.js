@@ -39,8 +39,8 @@ var REMOTE_SYNC_DATABASE = "todos"
 var REMOTE_SERVER_LOGIN_URL = "http://couchbase.triskaideca.com/todologin"
 var REMOTE_SERVER_LOGOUT_URL = "http://couchbase.triskaideca.com/todologout"
 	
-var SERVER_LOGIN = false
-var FACEBOOK_LOGIN = true
+var SERVER_LOGIN = true
+var FACEBOOK_LOGIN = false
 
 /*
 Initialize the app, connect to the database, draw the initial UI
