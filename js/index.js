@@ -158,7 +158,11 @@ function setLoginLogoutButton() {
     		$( ".todo-login" ).show().click( function() {
     			$( ".todo-login" ).off( "click" );
             	setLoginLogoutButton()
-				goServerLogin();
+				goServerLogin( function () {
+					$( ".todo-login" ).off( "click" )
+					setLoginLogoutButton()
+					goIndex()
+				});
 			} )
     	} else if( FACEBOOK_LOGIN ) {
     		$( ".todo-login" ).show().click( function() {
@@ -402,7 +406,7 @@ function toggleShare(doc, user, cb) {
  * Display Server Login Page
  */
 
-function goServerLogin() {
+function goServerLogin( callBack ) {
 	drawContent( config.t.login() )
 	$( "#content form" ).submit( function(e) {
 		e.preventDefault()
@@ -413,15 +417,8 @@ function goServerLogin() {
 		doFirstLogin( function(error, result) {
 			if (error) { return loginErr( error ) }
 			$( "#content form input" ).val( "" ) // Clear Form
-			// Login Success Go To Index
-			$( ".todo-login" ).off( "click" )
-			setLoginLogoutButton( function(error, result) {
-				if (error) {
-					alert( "Error: " + JSON.stringify( error ) )
-				}
-				log( "Set Login Logout Button Call Back Result: " + result )
-			} )
-			goIndex()
+			// Login Success 
+			callBack()
 		} )
 	} )
 }
@@ -463,7 +460,7 @@ function doFirstLogin(cb) {
 	                createMyProfile(function(err){
 	                    log("createMyProfile done "+JSON.stringify(err))
 	                    addMyUsernameToAllLists(function(err) {
-	                        log("addMyUsernameToAllLists done "+JSON.stringify(err))
+	                        log("addMyUsernameToAllLists done " + JSON.stringify( err ) ) 
 	                        if (err) {return cb(err)}
 	                        config.syncReference = triggerSync(function(err, ok){
 	                            log("triggerSync done " + JSON.stringify( err ) + ", OK:" + JSON.stringify( ok ))
@@ -829,7 +826,7 @@ function setupConfig(done) {
         setupDb(db, function(err, info){
             if (err) {return done(err)}
             setupViews(db, function(err, views){
-                if (err) {return done(err)}
+                //if (err) {return done(err)}
                 getUser(db, function(err, user) {
                     if (err) {return done(err)}
                     window.config = {
