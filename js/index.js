@@ -153,7 +153,7 @@ function goIndex() {
 
 function setLoginLogoutButton() {
     // offer the sign in screen to logged out users
-    if (!config.user) {
+    if (!config.user.user_id) {
     	if( SERVER_LOGIN ) {
     		$( ".todo-login" ).show().click( function() {
 				goServerLogin();
