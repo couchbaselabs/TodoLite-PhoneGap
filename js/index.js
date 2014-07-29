@@ -193,7 +193,7 @@ function setLoginLogoutButton() {
 			} )
     	} else if( FACEBOOK_LOGIN ) {
 	        $( ".todo-login" ).show().click( function() {
-	            if (config.user.access_token) {
+	            if (config.user && config.user.access_token) {
 	                doFacebookLogout( config.user.access_token, function(error, data) {
 	                    if (error) { return logoutError( error ) }
 	                    $( ".todo-login" ).off( "click" );
