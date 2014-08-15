@@ -27,7 +27,20 @@ new fastclick.FastClick(document.body)
 document.addEventListener("deviceready", onDeviceReady, false)
 
 // var REMOTE_SYNC_URL = "http://10.0.1.12:4984/todos/"
-var REMOTE_SYNC_URL = "http://sync.couchbasecloud.com:4984/todos4"
+// var REMOTE_SYNC_URL = "http://sync.couchbasecloud.com:4984/todos4"
+var REMOTE_SYNC_URL = "http://couchbase.triskaideca.com:4984/todos"
+
+var REMOTE_SYNC_PROTOCOL = "http://"
+var REMOTE_SYNC_SERVER = "couchbase.triskaideca.com"
+//var REMOTE_SYNC_SERVER = "sync.couchbasecloud.com"
+var REMOTE_SYNC_PORT = "4984"
+//var REMOTE_SYNC_DATABASE = "todolite-phonegap"
+var REMOTE_SYNC_DATABASE = "todos"
+var REMOTE_SERVER_LOGIN_URL = "http://couchbase.triskaideca.com/todologin"
+var REMOTE_SERVER_LOGOUT_URL = "http://couchbase.triskaideca.com/todologout"
+	
+var SERVER_LOGIN = true
+var FACEBOOK_LOGIN = false
 
 /*
 Initialize the app, connect to the database, draw the initial UI
@@ -44,7 +57,7 @@ function onDeviceReady() {
         }
         connectToChanges()
         goIndex()
-        triggerSync(function(err) {
+        config.syncReference = triggerSync(function(err) {
             if (err) {console.log("error on sync"+ JSON.stringify(err))}
         })
     })
@@ -59,7 +72,7 @@ window.dbChanged = function(){}
 function connectToChanges() {
   config.db.changes({since : config.info.update_seq}, function(err, change){
       lastSeq = change.seq
-      log("change", err, change)
+      log("change" + JSON.stringify( [ err, change ] ), err, change)
       window.dbChanged()
   })
 }
@@ -113,34 +126,14 @@ function goIndex() {
         var id = $(this).attr("data-id");
         goList(id)
     })
-    // offer the sign in screen to logged out users
-    if (!config.user) {
-        $(".todo-login").show().click(function(){
-            doFirstLogin(function(err) {
-                if (err) {return loginErr(err)}
-                goIndex()
-            })
-        })
-    } else {
-        $( ".todo-login" ).show().click( function() {
-            doFacebookLogout( config.user.access_token, function(error, data) {
-                if (error) { return logoutError( error ) }
-                // Logout Success
-                alert( "You are now logged out!" )
-                $( ".todo-login" ).off( "click" )
-                $( ".todo-login" ).show().click( function() {
-                    doFirstLogin( function( error ) {
-                        if (error) { return logoutError( error ) }
-                        goIndex()
-                    } )
-                } )
-            } )
-        } )
-    }
+    
+    setLoginLogoutButton();
+    
     // when the database changes, update the UI to reflect new lists
     window.dbChanged = function() {
         config.views(["lists", {descending : true}], function(err, view) {
-            log("lists", view)
+            log("lists " + JSON.stringify( view ) , view)
+            
             $("#scrollable").html(config.t.indexList(view))
             $("#scrollable li").on("swipeRight", function() {
                 var id = $(this).attr("data-id")
@@ -155,9 +148,71 @@ function goIndex() {
 }
 
 /*
-The list UI lets you create todo tasks and check them off or delete them.
-It also links to a screen for sharing each list with a different set of friends.
-*/
+ * This is a function that defines the login and logout button
+ */
+
+function setLoginLogoutButton() {
+    // offer the sign in screen to logged out users
+    if (!config.user) {
+    	if( SERVER_LOGIN ) {
+    		$( ".todo-login" ).show().click( function() {
+    			$( ".todo-login" ).off( "click" );
+            	setLoginLogoutButton()
+				goServerLogin( function () {
+					$( ".todo-login" ).off( "click" )
+					setLoginLogoutButton()
+					goIndex()
+				});
+			} )
+    	} else if( FACEBOOK_LOGIN ) {
+    		$( ".todo-login" ).show().click( function() {
+                doFirstLogin( function(error) {
+                	$( ".todo-login" ).off( "click" );
+                	setLoginLogoutButton()
+                    if (error) { return loginErr( error ) }
+                    goIndex()
+                } )
+            } )
+    	}
+    } else {
+    	if( SERVER_LOGIN ) {
+			$( ".todo-login" ).show().click( function() {
+				doServerLogout( function(error, data) {
+					if (error) {
+						if (error.reason) {
+							alert( "Can not Logout: " + error.reason )
+						} else {
+							alert( "Logout Error: " + JSON.stringify( error ) )
+						}
+					}
+					// Logout Success
+					alert( "You are now logged out!" )
+					$( ".todo-login" ).off( "click" )
+					setLoginLogoutButton()
+				} )
+			} )
+    	} else if( FACEBOOK_LOGIN ) {
+	        $( ".todo-login" ).show().click( function() {
+	            if (config.user && config.user.access_token) {
+	                doFacebookLogout( config.user.access_token, function(error, data) {
+	                    if (error) { return logoutError( error ) }
+	                    $( ".todo-login" ).off( "click" );
+	                    // Logout Success
+	                    alert( "You are now logged out!" );
+	                    setLoginLogoutButton()
+	                } )
+	            } else {
+	                setLoginLogoutButton();
+	            }
+	        } )
+    	}
+    }
+}
+
+/*
+ * The list UI lets you create todo tasks and check them off or delete them. It
+ * also links to a screen for sharing each list with a different set of friends.
+ */
 
 function goList(id) {
     config.db.get(id, function(err, doc){
@@ -348,34 +403,161 @@ function toggleShare(doc, user, cb) {
 }
 
 /*
+ * Display Server Login Page
+ */
+
+function goServerLogin( callBack ) {
+	drawContent( config.t.login() )
+	$( "#content form" ).submit( function(e) {
+		e.preventDefault()
+		var doc = jsonform( this );
+		config.user = {};
+		config.user.name = doc.email;
+		config.user.password = doc.password;
+		doFirstLogin( function(error, result) {
+			if (error) { return loginErr( error ) }
+			$( "#content form input" ).val( "" ) // Clear Form
+			// Login Success 
+			callBack()
+		} )
+	} )
+}
+
+/*
 Login and setup existing data for user account
 */
 
 function doFirstLogin(cb) {
-    doFacebook(function(err, data){
-        if (err) {return cb(err)}
-        config.setUser(data, function(err, ok){
-            if (err) {return cb(err)}
-            registerFacebookToken(function(err,ok){
-                log("registerFacebookToken done "+JSON.stringify(err))
-                if (err) {
-                    log("registerFacebookToken err "+JSON.stringify([err, ok]))
-                    return cb(err)
-                }
+	if (SERVER_LOGIN) {
+		doServerLogin( function(error, data) {
+			if (error) { return cb( error ) }
+			config.setUser( data, function(error, ok) {
+				if (error) { return cb( error ) }
                 createMyProfile(function(err){
                     log("createMyProfile done "+JSON.stringify(err))
                     addMyUsernameToAllLists(function(err) {
                         log("addMyUsernameToAllLists done "+JSON.stringify(err))
                         if (err) {return cb(err)}
-                        triggerSync(function(err, ok){
-                            log("triggerSync done "+JSON.stringify(err))
-                            cb(err, ok)
-                        })
-                    })
-                })
-            })
-        })
-    })
+						config.syncReference = triggerSync( function(error, ok) {
+							log( "triggerSync done, Error:" + JSON.stringify( error ) + " , ok:" + JSON.stringify( ok ) )
+							cb( error, ok )
+						} )
+                    } )
+                } )
+			} )
+		} )
+	} else if (FACEBOOK_LOGIN) {
+	    doFacebook(function(err, data){
+	        if (err) {return cb(err)}
+	        config.setUser(data, function(err, ok){
+	            if (err) {return cb(err)}
+	            registerFacebookToken(function(err,ok){
+	                log("registerFacebookToken done "+JSON.stringify(err))
+	                if (err) {
+	                    log("registerFacebookToken err "+JSON.stringify([err, ok]))
+	                    return cb(err)
+	                }
+	                createMyProfile(function(err){
+	                    log("createMyProfile done "+JSON.stringify(err))
+	                    addMyUsernameToAllLists(function(err) {
+	                        log("addMyUsernameToAllLists done " + JSON.stringify( err ) ) 
+	                        if (err) {return cb(err)}
+	                        config.syncReference = triggerSync(function(err, ok){
+	                            log("triggerSync done " + JSON.stringify( err ) + ", OK:" + JSON.stringify( ok ))
+	                            cb(err, ok)
+	                        })
+	                    })
+	                })
+	            })
+	        })
+	    })
+	}
+}
+
+/*
+ * Custom Indirect Server Login 
+ * parameters are REMOTE_SERVER_LOGIN_URL, username and password
+ * result returned is set as user
+ */
+
+function doServerLogin( callBack ) {
+	log( "Do Server Login" );
+	// check for internet connection
+	if (navigator && navigator.connection) {
+		log( "connection " + navigator.connection.type )
+		if (navigator.connection.type == "none") { return callBack( {
+			reason : "No network connection"
+		} ) }
+	}
+	if (config && config.user) {
+		var url = REMOTE_SERVER_LOGIN_URL;
+		var login = coax( url );
+		var credentials = '{ "username" : "' + config.user.name + '", "password" : "' + config.user.password + '" }';
+		log( "http " + url + " " + credentials )
+		login.post( JSON.parse( credentials ), function(error, result) {
+			if (error) { return callBack( error ) }
+			log( "Server Login Result:" + JSON.stringify( result ) )
+			callBack( false, result )
+		} )
+	} else {
+		return callBack( {
+			reason : "Configuration User is not Set!"
+		} )
+	}
+}
+
+/*
+ * Custom Indirect Server Logout
+ * Parameters REMOTE_SERVER_LOGOUT_URL
+ * User is set to null and sync replication is canceled.
+ */
+
+function doServerLogout( callBack ) {
+	log( "Do Server Logout" );
+	// check for internet connection
+	if (navigator && navigator.connection) {
+		log( "connection " + navigator.connection.type )
+		if (navigator.connection.type == "none") { 
+			return callBack( {
+				reason : "No network connection"
+			} )
+		}
+	}
+	var url = REMOTE_SERVER_LOGOUT_URL;
+	coax.get( url, function(error, result) {
+		config.user = null;
+		log( "Server Logout Result:" + JSON.stringify(result) + " Error:" + error )
+		if (error) { return callBack( error ) }
+        config.setUser( null, function( error , ok ) {
+        	log( "User is Set to Null" )
+            if (error) { return callBack( error ) }
+            config.syncReference.cancelSync( function ( error, ok ) {
+            	log( "Sync Replication Canceled" )
+                callBack( error , result )
+            } )
+        } )
+	} )
+}
+
+/*
+ * registerServer is called upon startup to log into the server.
+ */
+
+function registerServer(callBack) {
+	log( "Resister Server SessionID" )
+	if (!config.user.user_id) {
+		doFirstLogin( callBack )
+	}
+//	doServerLogin( function(error, data) {
+//		if (error) { return callBack( error ) }
+//		config.setUser( data, function(error, ok) {
+//			if (error) { return callBack( error ) }
+//			config.syncReference = triggerSync( function(error, ok) {
+//				log( "triggerSync done " + JSON.stringify( error ) )
+//				callBack( error, ok )
+//			} )
+//		} )
+//	} )
 }
 
 function registerFacebookToken(cb) {
@@ -410,7 +592,16 @@ function createMyProfile(cb) {
     profileData.user_id = profileData.email
     delete profileData.email
     log("createMyProfile put "+JSON.stringify(profileData))
-    config.db.put("p:"+profileData.user_id, profileData, cb)
+    //Check if Profile Document Exists
+    config.db.get( "p:"+profileData.user_id, function( error, doc ){
+        if ( error ) {
+            // doc does not exists
+            config.db.put("p:"+profileData.user_id, profileData, cb)
+        } else {
+            profileData = doc;
+            config.db.put("p:"+profileData.user_id, profileData, cb)
+        }
+    })
 }
 
 /*
@@ -450,11 +641,16 @@ function doFacebookLogout(token, cb) {
     FacebookInAppBrowser.settings.appId = "501518809925546"
     FacebookInAppBrowser.settings.redirectUrl = 'http://console.couchbasecloud.com/index/'
     FacebookInAppBrowser.settings.permissions = 'email'
-    FacebookInAppBrowser.logout( token, function(err, data) {
-        if (err) { return cb( err ) }
-        log( "Logged out of facebook" );
+    FacebookInAppBrowser.logout( token, function( error, data ) {
+        if (error) { return cb( error ) }
         config.user = null;
-        cb( false, data );
+        log( "Logged out of facebook" )
+        config.setUser( null, function( error , ok ) {
+            if (error) { return cb( error ) }
+            config.syncReference.cancelSync( function ( error, ok ) {
+                cb( error , data )
+            } )
+        } )
     } )
 }
 
@@ -491,14 +687,23 @@ push and pull
 */
 
 function triggerSync(cb, retryCount) {
+
     if (!config.user) {
         return log("no user")
-    }
-    var remote = {
-        url : config.site.syncUrl,
-        auth : {facebook : {email : config.user.email}} // why is this email?
-    },
-    push = {
+    } 
+    
+	if (SERVER_LOGIN) {
+		var remote = { 
+			url : REMOTE_SYNC_PROTOCOL + encodeURIComponent( config.user.name ) + ":" + encodeURIComponent( config.user.password ) + "@" + REMOTE_SYNC_SERVER + ":" + REMOTE_SYNC_PORT + "/" + REMOTE_SYNC_DATABASE + "/"
+		};
+	} else if (FACEBOOK_LOGIN) {
+	    var remote = {
+	        url : config.site.syncUrl,
+	        auth : {facebook : {email : config.user.email}} // why is this email?
+	    };
+	}
+	log (" Remote: " + JSON.stringify( remote ) )
+    var push = {
         source : appDbName,
         target : remote,
         continuous : true
@@ -519,18 +724,43 @@ function triggerSync(cb, retryCount) {
 
     var challenged = false;
     function authChallenge() {
+        log ("authChallenge")
         if (challenged) {return}
         challenged = true;
         pushSync.cancel(function(err, ok) {
             pullSync.cancel(function(err, ok) {
                 if (retryCount == 0) {return cb("sync retry limit reached")}
                 retryCount--
-                getNewFacebookToken(function(err, ok) {
-                    if (err) {
-                        return loginErr(err)
-                    }
-                    triggerSync(cb, retryCount)
-                })
+				if (SERVER_LOGIN) {
+					doServerLogin( function(err, result) {
+						if (err) { return loginErr( err ) }
+						config.setUser( result, function(err, ok) {
+							if (err) { return loginErr( err ) }
+							challenged = false;
+							config.syncReference = triggerSync( cb, retryCount )
+						} )
+					} )
+				} else if (FACEBOOK_LOGIN) {
+	                if (config.user) {
+	                    getNewFacebookToken(function(err, ok) {
+	                        if (err) {
+	                            return loginErr(err)
+	                        }
+	                        challenged = false;
+	                        config.syncReference = triggerSync( cb, retryCount )
+	                    })
+	                }
+				}
+            })
+        })
+    }
+    
+    function cancelSync( callBack ) {
+        pushSync.cancel(function(err, ok) {
+            if (err) {return log("pushSync Cancel Error: " + JSON.stringify(err) ) }
+            pullSync.cancel(function(err, ok) {
+                if (err) {return log("pullSync Cancel Error: " + JSON.stringify(err) ) }
+                callBack( err, ok )
             })
         })
     }
@@ -552,9 +782,13 @@ function triggerSync(cb, retryCount) {
     pullSync.on("connected", function(){
         cb()
     })
-    // setTimeout(function(){
-        pushSync.start()
-    // }, 10000)
+
+    pushSync.start()  
+    
+    var publicAPI = {
+        cancelSync : cancelSync
+    }
+    return publicAPI;
 }
 
 /*
@@ -596,7 +830,7 @@ function setupConfig(done) {
         setupDb(db, function(err, info){
             if (err) {return done(err)}
             setupViews(db, function(err, views){
-                if (err) {return done(err)}
+                //if (err) {return done(err)}
                 getUser(db, function(err, user) {
                     if (err) {return done(err)}
                     window.config = {
@@ -605,28 +839,75 @@ function setupConfig(done) {
                         },
                         user : user,
                         setUser : function(newUser, cb) {
-                            if (window.config.user) {
-                                if (config.user.user_id !== newUser.email) {
-                                    return cb("already logged in as "+config.user.user_id)
-                                } else {
-                                    // we got a new facebook token
-                                    config.user.access_token = newUser.access_token
-                                    db.put("_local/user", config.user, function(err, ok){
+                            if (!window.config.user && !newUser) {
+                                db.get("_local/user", function(err, doc){
+                                    if (err) {return cb(err)}
+                                    doc._deleted = true;
+                                    db.put("_local/user", doc , function(err, ok){
                                         if (err) {return cb(err)}
-                                        log("updateUser ok")
-                                        config.user._rev = ok.rev
+                                        log("deleted local user")
                                         cb()
                                     })
-                                }
-                            } else {
-                                newUser.user_id = newUser.email
-                                log("setUser "+JSON.stringify(newUser))
-                                db.put("_local/user", newUser, function(err, ok){
-                                    if (err) {return cb(err)}
-                                    log("setUser ok")
-                                    window.config.user = newUser
-                                    cb()
                                 })
+                            } else {
+                            	if (SERVER_LOGIN) {
+    								if (config.user.user_id) {
+    									if (config.user.user_id !== newUser.username) {
+    										return cb( "already logged in as " + config.user.name )
+    									} else {
+    										/* We Got a New Session */
+    										log( "New Session setUser " + JSON.stringify( newUser ) )
+    										config.user.sessionID = newUser.sessionID
+    										config.user.name = newUser.username;
+    										config.user.user_id = newUser.username;
+    										config.user.email = newUser.username;
+    										config.user.password = newUser.password;
+    										db.put( "_local/user", config.user, function(err, ok) {
+    											if (err) { return cb( err ) }
+    											log( "updateUser ok: " + JSON.stringify( ok ) )
+    											config.user._rev = ok.rev
+    											cb()
+    										} )
+    									}
+    								} else {
+    									log( "Initialize setUser " + JSON.stringify( newUser ) )
+    									config.user.sessionID = newUser.sessionID
+    									config.user.name = newUser.username;
+    									config.user.user_id = newUser.username;
+    									config.user.email = newUser.username;
+    									config.user.password = newUser.password;
+    									db.put( "_local/user", config.user, function(err, ok) {
+    										if (err) { return cb( err ) }
+    										log( "setUser ok: " + JSON.stringify( ok ) )
+    										config.user._rev = ok.rev
+    										cb()
+    									} )
+    								}
+    							} else if (FACEBOOK_LOGIN) {
+	                                if (window.config.user) {
+	                                    if (config.user.user_id !== newUser.email) {
+	                                        return cb("already logged in as "+config.user.user_id)
+	                                    } else {
+	                                        // we got a new facebook token
+	                                        config.user.access_token = newUser.access_token
+	                                        db.put("_local/user", config.user, function(err, ok){
+	                                            if (err) {return cb(err)}
+	                                            log("updateUser ok")
+	                                            config.user._rev = ok.rev
+	                                            cb()
+	                                        })
+	                                    }
+	                                } else {
+	                                    newUser.user_id = newUser.email
+	                                    log("setUser "+JSON.stringify(newUser))
+	                                    db.put("_local/user", newUser, function(err, ok){
+	                                        if (err) {return cb(err)}
+	                                        log("setUser ok")
+	                                        window.config.user = newUser
+	                                        cb()
+	                                    })
+	                                }
+    							}
                             }
                         },
                         db : db,
@@ -637,7 +918,11 @@ function setupConfig(done) {
                         t : t
                     }
                     if (window.config.user) {
-                        registerFacebookToken(done)
+                    	if (SERVER_LOGIN) {
+							registerServer( done )
+						} else if (FACEBOOK_LOGIN) {
+							registerFacebookToken(done)
+						}
                     } else {
                         done(false)
                     }
@@ -814,8 +1099,7 @@ function syncManager(serverUrl, syncDefinition) {
     function processTaskInfo(id, cb) {
         taskInfo(id, function(err, task) {
             if (err) {return cb(err)}
-            log("task", task)
-
+            log("task" + JSON.stringify( task ), task)
             publicAPI.task = task
             if (task.error && task.error[0] == 401) {
                 cb(true)
