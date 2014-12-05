@@ -27,7 +27,7 @@ new fastclick.FastClick(document.body)
 document.addEventListener("deviceready", onDeviceReady, false)
 
 // var REMOTE_SYNC_URL = "http://10.0.1.12:4984/todos/"
-var REMOTE_SYNC_URL = "http://demo.sc.couchbase.com/todolite"
+var REMOTE_SYNC_URL = "http://demo.mobile.couchbase.com/todolite"
 
 /*
 Initialize the app, connect to the database, draw the initial UI
