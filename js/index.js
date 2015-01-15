@@ -239,7 +239,7 @@ function doCamera(id) {
     navigator.camera.getPicture(function(imageData) {
         config.db(id, function(err, doc){
             doc._attachments = {
-              "image.jpg" : {
+              "image" : {
                 content_type : "image/jpg",
                 data : imageData
               }
@@ -262,14 +262,14 @@ Display a photo for an task if it exists.
 function goImage(id) {
     window.dbChanged = function(){}
     config.db(id, function(err, doc){
-        doc.image_path = config.db([id,"image.jpg"]).pax.toString()
+        doc.image_path = config.db([id,"image"]).pax.toString()
         drawContent(config.t.image(doc))
         $("#content .todo-image-back").click(function(){
             goList(doc.list_id)
         })
         $("#content .todo-image-del").click(function(){
             delete doc.image_path
-            delete doc._attachments["image.jpg"]
+            delete doc._attachments["image"]
             config.db.post(doc, function(err, ok) {
                 goList(doc.list_id)
             })
@@ -656,7 +656,7 @@ function setupConfig(done) {
     }
 
     function setupViews(db, cb) {
-        var design = "_design/todo9"
+        var design = "_design/todo10"
         db.put(design, {
             views : {
                 lists : {
@@ -673,7 +673,7 @@ function setupConfig(done) {
                                 {
                                     checked : doc.checked ? "checked" : "",
                                     title : doc.title,
-                                    image : (doc._attachments && doc._attachments["image.jpg"])
+                                    image : (doc._attachments && doc._attachments["image"])
                                 })
                         }
                     }.toString()
