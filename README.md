@@ -25,7 +25,7 @@ phonegap local plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin
 
 If you're using PhoneGap 5.0 or higher, you'll also need to install the Apache Cordova whitelist plugin to communicate with external services:
 
-```
+```sh
 phonegap local plugin add cordova-plugin-whitelist
 ```
 
@@ -67,6 +67,8 @@ To resolve this, you must extend the Gradle build file for Android as outlined i
 Create **platforms/android/build-extras.gradle** in your project and add the following:
 
 ```
+// workaround for "duplicate files during packaging of APK" issue
+// see https://groups.google.com/d/msg/adt-dev/bl5Rc4Szpzg/wC8cylTWuIEJ
 android {
 	packagingOptions {
 		exclude 'META-INF/ASL2.0'
