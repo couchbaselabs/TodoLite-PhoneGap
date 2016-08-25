@@ -26,7 +26,7 @@ new fastclick.FastClick(document.body)
 
 document.addEventListener("deviceready", onDeviceReady, false)
 
-// var REMOTE_SYNC_URL = "http://10.0.1.12:4984/todos/"
+//var REMOTE_SYNC_URL = "http://localhost:4984/todolite"
 var REMOTE_SYNC_URL = "http://demo.mobile.couchbase.com/todolite"
 
 /*
@@ -407,7 +407,7 @@ function createMyProfile(cb) {
     log("createMyProfile user "+JSON.stringify(config.user))
     var profileData = JSON.parse(JSON.stringify(config.user))
     profileData.type = "profile"
-    profileData.user_id = profileData.email
+    profileData.user_id = config.user.user_id
     delete profileData.email
     log("createMyProfile put "+JSON.stringify(profileData))
     config.db.put("p:"+profileData.user_id, profileData, cb)
@@ -606,7 +606,7 @@ function setupConfig(done) {
                         user : user,
                         setUser : function(newUser, cb) {
                             if (window.config.user) {
-                                if (config.user.user_id !== newUser.email) {
+                                if (config.user.user_id !== newUser.id) {
                                     return cb("already logged in as "+config.user.user_id)
                                 } else {
                                     // we got a new facebook token
@@ -619,7 +619,7 @@ function setupConfig(done) {
                                     })
                                 }
                             } else {
-                                newUser.user_id = newUser.email
+                                newUser.user_id = newUser.id
                                 log("setUser "+JSON.stringify(newUser))
                                 db.put("_local/user", newUser, function(err, ok){
                                     if (err) {return cb(err)}
