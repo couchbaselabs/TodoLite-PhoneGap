@@ -17,10 +17,10 @@ cd todo-lite
 Now install the PhoneGap plugins required to make it run. This activates Couchbase Lite, the camera, and the InAppBrowser.
 
 ```sh
-phonegap local plugin add https://github.com/couchbaselabs/Couchbase-Lite-PhoneGap-Plugin.git
-phonegap local plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin-camera.git
-phonegap local plugin add https://github.com/apache/cordova-plugin-inappbrowser.git
-phonegap local plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin-network-information.git
+phonegap plugin add https://github.com/couchbaselabs/Couchbase-Lite-PhoneGap-Plugin.git
+phonegap plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin-camera.git
+phonegap plugin add https://github.com/apache/cordova-plugin-inappbrowser.git
+phonegap plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin-network-information.git
 ```
 
 If you're using PhoneGap 5.0 or higher, you'll also need to install the Apache Cordova whitelist plugin to communicate with external services:
