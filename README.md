@@ -78,6 +78,28 @@ android {
 }
 ```
 
+#### Troubleshoot Latest PhoneGap 6.x on Android
+
+By launching app by `phonegap run android`, phonegap could fail with printing following message.
+```
+Error: Could not find gradle wrapper within Android SDK. Might need to update your Android SDK.
+Looked here: /Users/hideki/java/android-sdk-macosx/tools/templates/gradle/wrapper
+```
+
+solution:
+1. update Phonegap android plugin
+```
+phonegap platform rm android
+phonegap platform add android@latest
+```
+2. Update gradle version in `build.gradle` files. Both top level and application level build.gradle file
+```
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.3'
+	...
+    }
+```
+
 ## Running your own Sync Gateway server
 
 In `www/js/index.js` there is a value for `syncUrl` which is set to a remote server hosted by Couchbase as a convenience. You can easily provision your own server either by running your own instance of [Couchbase Sync Gateway](https://github.com/couchbase/sync_gateway) or by creating a server in [the experimental Couchbase cloud.](http://console.couchbasecloud.com/)
