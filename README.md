@@ -18,9 +18,9 @@ Now install the PhoneGap plugins required to make it run. This activates Couchba
 
 ```sh
 phonegap plugin add https://github.com/couchbaselabs/Couchbase-Lite-PhoneGap-Plugin.git
-phonegap plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin-camera.git (phonegap plugin add cordova-plugin-camera)
+phonegap plugin add cordova-plugin-camera
 phonegap plugin add https://github.com/apache/cordova-plugin-inappbrowser.git 
-phonegap plugin add https://git-wip-us.apache.org/repos/asf/cordova-plugin-network-information.git (or phonegap plugin add cordova-plugin-network-information)
+phonegap plugin add cordova-plugin-network-information
 ```
 
 If you're using PhoneGap 5.0 or higher, you'll also need to install the Apache Cordova whitelist plugin to communicate with external services:
