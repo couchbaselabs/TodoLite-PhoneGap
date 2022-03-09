@@ -1,3 +1,5 @@
+⚠️ This repo is obsolete.  It was built against a version of Couchbase Lite that reached end of life years ago.
+
 # Todo Lite
 
 A shared todo list application to demonstrate the features of [Couchbase Lite](http://github.com/couchbase/mobile).
